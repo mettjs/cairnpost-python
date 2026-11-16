@@ -1,0 +1,29 @@
+# Build output, caches and environments
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+uv.lock
+
+# Local env overrides
+.env
+.env.local
+
+# Editor / OS cruft
+.DS_Store
+.idea/
+.vscode/
+
+# Working documents and assistant rules stay out of the repository
+.claude/
+CLAUDE.md
+PLAN.md
+STATUS.md
+NOTES.md
+COMMIT_MESSAGE.md
+.archive/
+graphify-out/
