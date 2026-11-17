@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ._answer import reading
-from ._read import Misshapen, fields, flag, has, items, maybe_text, text, time
+from ._read import Misshapen, fields, flag, has, items, maybe_text, said, text, time
 from ._transport import Call, Transport
 
 
@@ -66,8 +66,8 @@ def _read_variable(v: object) -> TemplateVariable:
 
 def _read_template(v: object) -> Template:
     o = fields(v)
-    t = Template(
-        id=text(o, "id"),
+    return Template(
+        id=said(o, "id"),
         name=text(o, "name"),
         domain=maybe_text(o, "domain"),
         subject=text(o, "subject"),
@@ -77,14 +77,13 @@ def _read_template(v: object) -> Template:
         created_at=time(o, "created_at"),
         updated_at=time(o, "updated_at"),
     )
-    if t.id == "":
-        raise Misshapen
-    return t
 
 
 def _read_list(v: object) -> TemplateList:
-    o = fields(v)
-    return TemplateList(data=items(has(o, "data"), "data", _read_template), more=flag(o, "more"))
+    # Whether there are more is said either way: left out, it must not
+    # read as "these are all".
+    o = has(fields(v), "data", "more")
+    return TemplateList(data=items(o, "data", _read_template), more=flag(o, "more"))
 
 
 class Templates:

@@ -16,7 +16,7 @@ from cairnpost import (
 )
 from cairnpost._client import CairnPost as _Same
 
-from .stand import EMAIL, KEY, Stand, serve
+from .stand import EMAIL, KEY, UP, Stand, serve
 
 RECORD = '{"id":"m","created_at":"2030-01-01T00:00:00Z","updated_at":"2030-01-01T00:00:00Z"}'
 
@@ -53,7 +53,7 @@ class TheClient(unittest.TestCase):
         self.assertEqual(s.seen[1].agent, f"cairnpost-python/{__version__}")
 
     def test_a_key_is_sent_without_the_space_around_it_and_is_not_shown(self) -> None:
-        s = serve(self, 200, '{"status":"ok","driver":"capture"}')
+        s = serve(self, 200, UP)
         client = CairnPost(s.url, " cp_test_KEYMARK\n")
         client.limits()
         self.assertEqual(s.seen[0].auth, "Bearer cp_test_KEYMARK")
@@ -82,7 +82,7 @@ class TheClient(unittest.TestCase):
 
     def test_a_send_is_made_once_even_when_the_connection_drops(self) -> None:
         for key in [None, "welcome-42"]:
-            s = Stand(self, lambda n, seen: (200, '{"status":"ok"}') if seen.method == "GET" else None)
+            s = Stand(self, lambda n, seen: (200, UP) if seen.method == "GET" else None)
             s.client.health()
             with self.assertRaises(TransportError) as raised:
                 s.client.emails.send(

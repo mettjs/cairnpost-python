@@ -13,6 +13,7 @@ from ._read import (
     maybe_text,
     maybe_time,
     part,
+    said,
     text,
     text_map,
     texts,
@@ -188,7 +189,7 @@ def _read_event(v: object) -> MessageEvent:
 def read_message(v: object) -> Message:
     o = fields(v)
     return Message(
-        id=text(o, "id"),
+        id=said(o, "id"),
         from_=text(o, "from"),
         to=text(o, "to"),
         state=text(o, "state"),

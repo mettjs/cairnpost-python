@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 
-from ._read import count, fields, maybe_text, maybe_time, text, time
+from ._read import count, fields, maybe_text, maybe_time, said, text, time
 
 
 class DeliveryState(StrEnum):
@@ -47,7 +47,7 @@ class Delivery:
 def read_delivery(v: object) -> Delivery:
     o = fields(v)
     return Delivery(
-        id=text(o, "id"),
+        id=said(o, "id"),
         email_id=maybe_text(o, "email_id"),
         inbound_id=maybe_text(o, "inbound_id"),
         type=text(o, "type"),

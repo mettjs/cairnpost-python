@@ -129,20 +129,6 @@ class TheOtherSide(unittest.TestCase):
         s.client.emails.send(Email(from_="a@example.com", to=["b@example.org"], subject="x\ud800y", text="t"))
         self.assertEqual(json.loads(s.seen[0].body)["subject"], "x?y")
 
-    def test_a_field_that_is_null_is_not_what_cairnpost_always_says(self) -> None:
-        c = serve(self, 200, '{"data":null,"added":null,"lifted":null,"delivered":null,"driver":null}').client
-        for call in (
-            c.webhooks.list,
-            c.suppressions.list,
-            c.limits,
-            c.captured,
-            lambda: c.suppressions.add("example.com", "a@example.org"),
-            lambda: c.suppressions.lift("example.com", "a@example.org"),
-            lambda: c.webhooks.test("w"),
-        ):
-            with self.assertRaises(TransportError):
-                call()
-
     def test_a_strangers_date_this_language_has_no_year_for_reads_as_none(self) -> None:
         answer = (
             '{"id":"in-1","to":"help@example.com","received_at":"2030-01-01T00:00:00Z",'

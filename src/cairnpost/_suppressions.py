@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from ._answer import reading
 from ._pages import LARGEST_PAGE, Page, paging, read_page, walk
-from ._read import count, fields, flag, has, maybe_text, text, time
+from ._read import Misshapen, count, fields, flag, has, maybe_text, said, text, time
 from ._transport import Call, Transport
 
 
@@ -41,13 +41,28 @@ class Suppression:
 def _read_suppression(v: object) -> Suppression:
     o = fields(v)
     return Suppression(
-        domain=text(o, "domain"),
-        address=text(o, "address"),
+        domain=said(o, "domain"),
+        address=said(o, "address"),
         reason=text(o, "reason"),
         email_id=maybe_text(o, "email_id"),
         note=maybe_text(o, "note"),
         created_at=time(o, "created_at"),
     )
+
+
+def _lifted(v: object) -> int:
+    """Reads how many suppressions were lifted."""
+    n = count(has(fields(v), "lifted"), "lifted")
+    if n < 0:
+        raise Misshapen
+    return n
+
+
+def _lifted_one(v: object) -> None:
+    # CairnPost lifts the one address or says it was not suppressed: an
+    # answer of none, or of several, is not its own.
+    if _lifted(v) != 1:
+        raise Misshapen
 
 
 class Suppressions:
@@ -97,7 +112,7 @@ class Suppressions:
         `is_not_found` says it was not suppressed.
         """
         k = Call(method="POST", path=("suppressions", "lift"), body={"domain": domain, "address": address})
-        reading(self._t.read_json(k), lambda v: has(fields(v), "lifted"))
+        reading(self._t.read_json(k), _lifted_one)
 
     def lift_all(self, domain: str, reason: str | None = None) -> int:
         """Lifts every suppression of a sending domain, and answers how many.
@@ -108,4 +123,4 @@ class Suppressions:
         if reason:
             body["reason"] = str(reason)
         answer = self._t.read_json(Call(method="POST", path=("suppressions", "lift"), body=body))
-        return reading(answer, lambda v: count(has(fields(v), "lifted"), "lifted"))
+        return reading(answer, _lifted)

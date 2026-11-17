@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone, tzinfo
 
 from cairnpost import (
     Attachment,
@@ -32,6 +32,19 @@ RECORD = """{"id":"msg 1","from":"a@example.com","to":"b@example.org","state":"b
 
 def at(text: str) -> datetime:
     return datetime.fromisoformat(text).astimezone(UTC)
+
+
+class SetBack(tzinfo):
+    """A zone in the hour its clock is set back: which offset holds depends on `fold`."""
+
+    def utcoffset(self, dt: datetime | None) -> timedelta:
+        return timedelta(hours=-5 if dt is not None and dt.fold else -4)
+
+    def dst(self, dt: datetime | None) -> timedelta:
+        return timedelta(0)
+
+    def tzname(self, dt: datetime | None) -> str:
+        return "set back"
 
 
 class Sending(unittest.TestCase):
@@ -178,6 +191,12 @@ class Sending(unittest.TestCase):
         with self.assertRaises(CairnPostError) as gone:
             s.client.emails.cancel("msg-1")
         self.assertEqual((gone.exception.code, gone.exception.retryable), (ErrorCode.NOT_SCHEDULED, False))
+        # A time in the hour a clock is set back is equal to none in
+        # another zone, as the language compares them: the move is known
+        # by its instant.
+        back = serve(self, 200, '{"id":"msg-1","scheduled_at":"2030-11-03T05:30:00Z"}')
+        back.client.emails.reschedule("msg-1", datetime(2030, 11, 3, 1, 30, tzinfo=SetBack()))
+        self.assertEqual(back.seen[0].body, '{"scheduled_at":"2030-11-03T05:30:00.000000Z"}')
         # Anything else that says "fine" is not CairnPost saying it was done.
         for body in ["", "{}", "<html>maintenance</html>", '{"state":"cancelled"}']:
             other = serve(self, 200, body)

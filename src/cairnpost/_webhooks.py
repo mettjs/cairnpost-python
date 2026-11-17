@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ._answer import reading
-from ._deliveries import Delivery, read_delivery
+from ._deliveries import Delivery, DeliveryState, read_delivery
 from ._pages import LARGEST_PAGE, Page, paging, read_page, walk
 from ._read import (
     Misshapen,
@@ -17,7 +17,7 @@ from ._read import (
     items,
     maybe_text,
     maybe_time,
-    named,
+    said,
     text,
     texts,
     time,
@@ -73,8 +73,8 @@ class WebhookTest:
 
 def _read_webhook(v: object) -> Webhook:
     o = fields(v)
-    w = Webhook(
-        id=text(o, "id"),
+    return Webhook(
+        id=said(o, "id"),
         url=text(o, "url"),
         domain=maybe_text(o, "domain"),
         events=texts(o, "events"),
@@ -86,9 +86,24 @@ def _read_webhook(v: object) -> Webhook:
         previous_secret_until=maybe_time(o, "previous_secret_until"),
         secret=maybe_text(o, "secret"),
     )
-    if w.id == "":
+
+
+def _with_secret(v: object) -> Webhook:
+    """Reads an endpoint that must come with its signing secret.
+
+    An answer without one is not CairnPost's: the secret is said this
+    once, and an endpoint taken without it could never be verified.
+    """
+    w = _read_webhook(v)
+    if w.secret is None:
         raise Misshapen
     return w
+
+
+def _retried(v: object) -> None:
+    # Tried now, it is owed again: any other state is not the answer.
+    if text(fields(v), "state") != DeliveryState.PENDING:
+        raise Misshapen
 
 
 def _read_test(v: object) -> WebhookTest:
@@ -137,7 +152,7 @@ class Webhooks:
             body["events"] = _types(events)
         if description:
             body["description"] = description
-        return self._one(Call(method="POST", path=("webhooks",), body=body))
+        return reading(self._t.read_json(Call(method="POST", path=("webhooks",), body=body)), _with_secret)
 
     def list(self) -> List[Webhook]:
         """Answers every endpoint."""
@@ -200,7 +215,7 @@ class Webhooks:
         gives another new secret, and the one the application holds goes
         on signing for its own time meanwhile.
         """
-        return self._one(Call(method="POST", path=("webhooks", id, "secret")))
+        return reading(self._t.read_json(Call(method="POST", path=("webhooks", id, "secret"))), _with_secret)
 
     def resume(self, id: str) -> Webhook:
         """Ends an endpoint's pause and answers the endpoint.
@@ -237,4 +252,4 @@ class Webhooks:
         if it is pending.
         """
         k = Call(method="POST", path=("webhooks", id, "deliveries", delivery_id, "retry"))
-        reading(self._t.read_json(k), lambda v: named(v, "state"))
+        reading(self._t.read_json(k), _retried)
