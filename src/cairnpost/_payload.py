@@ -37,12 +37,13 @@ def read_event(id: str, body: object) -> WebhookEvent:
         raise Misshapen
     data = fields(body.get("data"))
     if kind == EventType.RECEIVED:
-        # It is about an email that came, and must say which and for whom.
+        # It is about an email that came, and must say which, for whom
+        # and when.
         received = EventReceived(
             id=text(data, "inbound_id"),
             from_=text(data, "from"),
             to=texts(data, "to"),
-            received_at=maybe_time(data, "received_at"),
+            received_at=time(data, "received_at"),
         )
         if received.id == "" or not received.to:
             raise Misshapen
@@ -52,12 +53,14 @@ def read_event(id: str, body: object) -> WebhookEvent:
         email = _read_email(data)
     except Misshapen:
         email = None
-    if email is not None and (email.id == "" or not email.to):
+    known = kind in _ABOUT_AN_EMAIL
+    if email is not None and (email.id == "" or not email.to or (known and email.created_at is None)):
         email = None
-    # An event about an email must say which: one that does not is
-    # refused here, not handed on with nothing in it. A type this client
-    # does not know is passed on with what could be read of it.
-    if email is None and kind in _ABOUT_AN_EMAIL:
+    # An event about an email must say which, and when that email was
+    # made: one that does not is refused here, not handed on with nothing
+    # in it. A type this client does not know is passed on with what
+    # could be read of it.
+    if email is None and known:
         raise Misshapen
     if kind == EventType.BOUNCED and (email is None or not email.bounce_type):
         raise Misshapen
