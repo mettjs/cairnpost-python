@@ -435,7 +435,7 @@ Keyword arguments of `CairnPost(base_url, api_key, ...)`:
 | Option | Does |
 |---|---|
 | `timeout` | How long a call may take, in seconds (150 by default). Keep it above the server's send and batch timeouts. |
-| `max_answer_bytes` | How much of an answer is read (64 MiB by default). A larger one is an error that says so. |
+| `max_answer_bytes` | How much of an answer is read (64 MiB by default). A larger one is an error that says so. A refusal is not counted: 64 KiB of one are read, and a longer one is its status alone. |
 | `user_agent` | Put your application's name before the client's in `User-Agent`. |
 | `tls` | An `ssl.SSLContext`, to trust a server by other certificates than the system's. |
 

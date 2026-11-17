@@ -72,6 +72,8 @@ class CairnPost:
         `timeout` is how long a call may take, in seconds: keep it above
         the server's send and batch timeouts. `max_answer_bytes` is how
         much of an answer is read; a larger one is an error that says so.
+        A refusal is not counted: 64 KiB of one are read whatever this
+        says, and a longer one is its status alone.
         `user_agent` is the application's name, put before the client's
         own in the User-Agent header; a name a header cannot carry is
         ignored. `tls` is how an https server is trusted; the system's own

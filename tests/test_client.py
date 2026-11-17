@@ -9,6 +9,7 @@ from cairnpost import (
     CairnPost,
     CairnPostError,
     Email,
+    ErrorCode,
     TransportError,
     __version__,
     is_not_found,
@@ -153,12 +154,37 @@ class TheClient(unittest.TestCase):
     # A long page from something that is not CairnPost is not read whole
     # to say that it is not CairnPost's.
     def test_a_refusal_is_read_no_further_than_its_few_fields_need(self) -> None:
-        s = serve(self, 502, "<html>" + "x" * (1 << 20))
+        for most in [1024, 1 << 20]:
+            s = serve(self, 502, "<html>" + "x" * (1 << 20), max_answer_bytes=most)
+            with self.assertRaises(CairnPostError, msg=f"reading {most} bytes") as raised:
+                s.client.emails.send(EMAIL)
+            self.assertEqual(
+                (raised.exception.status, raised.exception.code, may_have_sent(raised.exception)),
+                (502, None, True),
+            )
+
+    # A refusal longer than is read is not CairnPost's: nothing of what
+    # was read of it is believed, a name that says "nothing was sent"
+    # least of all.
+    def test_a_refusal_longer_than_is_read_is_its_status_alone(self) -> None:
+        named = '{"statusCode":503,"name":"unavailable","message":"Down.","id":"msg-1"}'
+        s = serve(self, 503, named + " " * (80 * 1024))
         with self.assertRaises(CairnPostError) as raised:
             s.client.emails.send(EMAIL)
+        err = raised.exception
+        self.assertEqual((err.status, err.code, err.email_id, may_have_sent(err)), (503, None, None, True))
+
+    # CairnPost's own refusal is read whole under a limit smaller than
+    # it: its name says whether the email may have gone.
+    def test_a_refusal_longer_than_the_limit_on_answers_keeps_its_name(self) -> None:
+        long = "Suppressed. " * 40
+        body = f'{{"statusCode":422,"name":"recipient_suppressed","message":"{long}","id":"msg-1"}}'
+        s = serve(self, 422, body, max_answer_bytes=100)
+        with self.assertRaises(CairnPostError) as raised:
+            s.client.emails.send(EMAIL)
+        err = raised.exception
         self.assertEqual(
-            (raised.exception.status, raised.exception.code, may_have_sent(raised.exception)),
-            (502, None, True),
+            (err.code, err.email_id, may_have_sent(err)), (ErrorCode.RECIPIENT_SUPPRESSED, "msg-1", True)
         )
 
     def test_an_id_that_would_name_another_path_is_not_asked_of_the_server(self) -> None:

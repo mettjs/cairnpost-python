@@ -17,7 +17,9 @@ from ._errors import CairnPostError, TransportError
 from ._parse import parse
 from ._problem import problem_of
 
-#: How much of an answer that is a refusal is read.
+#: How much of an answer that is a refusal is read. It is not an option:
+#: nothing past a refusal's short fields is kept, so there is nothing to
+#: choose.
 _MOST_OF_A_REFUSAL = 64 * 1024
 
 _HEADER_SAFE = re.compile(r"[\x21-\x7e]([\x20-\x7e]*[\x21-\x7e])?", re.ASCII)
@@ -194,9 +196,12 @@ class Transport:
             status, kind = res.status, res.getheader("Content-Type") or ""
             retry_after = res.getheader("Retry-After")
             # Of an answer that is a refusal only its few short fields are
-            # kept: no more of it is read than holds them.
+            # kept: no more of it is read than holds them, and that much
+            # is read whatever the limit on answers. Its name says whether
+            # the email may have gone. A refusal longer than that is not
+            # CairnPost's: nothing of it is believed but its status.
             fine = 200 <= status <= 299
-            most = self._most if fine else min(self._most, _MOST_OF_A_REFUSAL)
+            most = self._most if fine else _MOST_OF_A_REFUSAL
             raw = self._read(conn, res, ends, most, cut=not fine)
         except TransportError as err:
             return err, 0, "", None, b""
@@ -244,7 +249,7 @@ class Transport:
     ) -> bytes:
         """Reads an answer's body, and no more of it than `most`.
 
-        A longer one is an error, or with `cut` is read that far and left.
+        A longer one is an error, or with `cut` is left and read as nothing.
         """
         chunks: list[bytes] = []
         size = 0
@@ -260,7 +265,7 @@ class Transport:
             if size + len(chunk) > most:
                 if not cut:
                     raise TransportError("too_large")
-                break
+                return b""
             size += len(chunk)
             chunks.append(chunk)
         return b"".join(chunks)
