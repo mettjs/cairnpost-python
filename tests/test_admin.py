@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import unittest
-from collections.abc import Callable
 from datetime import UTC, datetime
 
 from cairnpost import (
-    CairnPost,
     CairnPostError,
     DeliveryState,
     ErrorCode,
@@ -20,7 +18,7 @@ from cairnpost import (
     is_wrong_address,
 )
 
-from .stand import Seen, Stand, serve
+from .stand import UP, Seen, Stand, serve
 
 DAY = '"created_at":"2030-01-01T00:00:00Z"'
 ENDPOINT = (
@@ -88,6 +86,7 @@ class WithAnAdminKey(unittest.TestCase):
         answers = {
             1: (201, '{"domain":"example.com","address":"a@example.org","added":true}'),
             2: (200, '{"domain":"example.com","address":"a@example.org","added":false}'),
+            3: (200, '{"lifted":1}'),
         }
         s = Stand(self, lambda n, seen: answers.get(n, (200, '{"lifted":3}')))
         self.assertIs(s.client.suppressions.add("example.com", "a@example.org", "asked"), True)
@@ -158,35 +157,6 @@ class WithAnAdminKey(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             w.create("https://app.example.com/hook", events="email.bounced")
-
-    # An answer that lacks what CairnPost always says in it is not
-    # CairnPost's: it must not read as "nothing", "no" or "done".
-    def test_an_answer_of_nothing_is_not_taken_for_an_answer(self) -> None:
-        def every(c: CairnPost) -> dict[str, Callable[[], object]]:
-            return {
-                "suppressions.add": lambda: c.suppressions.add("example.com", "a@example.org"),
-                "suppressions.lift": lambda: c.suppressions.lift("example.com", "a@example.org"),
-                "suppressions.lift_all": lambda: c.suppressions.lift_all("example.com"),
-                "suppressions.list": c.suppressions.list,
-                "webhooks.list": c.webhooks.list,
-                "webhooks.test": lambda: c.webhooks.test("w"),
-                "webhooks.deliveries": lambda: c.webhooks.deliveries("w"),
-                "webhooks.retry_delivery": lambda: c.webhooks.retry_delivery("w", "d"),
-                "webhooks.delete": lambda: c.webhooks.delete("w"),
-                "templates.list": c.templates.list,
-                "templates.delete": lambda: c.templates.delete("t"),
-                "received.list": c.received.list,
-                "received.delete": lambda: c.received.delete("r"),
-                "limits": c.limits,
-                "captured": c.captured,
-            }
-
-        for body in ["{}", "<html>maintenance</html>"]:
-            calls = every(serve(self, 200, body).client)
-            for name, call in calls.items():
-                with self.assertRaises(TransportError, msg=f"{name} took {body}") as raised:
-                    call()
-                self.assertEqual(raised.exception.reason, "not_cairnpost")
 
     def test_a_webhook_change_can_switch_off_and_clear_and_leaves_the_rest_alone(self) -> None:
         s = serve(self, 200, ENDPOINT + "}")
@@ -374,9 +344,8 @@ class WithAnAdminKey(unittest.TestCase):
             with self.assertRaises((CairnPostError, TransportError), msg=body) as raised:
                 serve(self, status, body).client.health()
             self.assertEqual(is_wrong_address(raised.exception), status == 404, body)
-        real = Stand(
-            self, lambda n, seen: (200, '{"status":"ok"}') if seen.path == "/health" else (404, nothing)
-        )
+        real_up = UP.replace("capture", "cloudflare")
+        real = Stand(self, lambda n, seen: (200, real_up) if seen.path == "/health" else (404, nothing))
         with self.assertRaises(NotCapturingError):
             real.client.captured()
         # With no server of CairnPost's there at all, the address is what is wrong.

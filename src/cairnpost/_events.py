@@ -49,6 +49,8 @@ class EventEmail:
     #: The one address the event is about, also when the email went to
     #: several.
     to: list[str]
+    #: When the email was made. Set for every type this client knows;
+    #: only one it does not know can leave it out.
     created_at: datetime | None
     #: The receiving server's status ("5.1.1").
     code: str | None
@@ -91,7 +93,7 @@ class EventReceived:
     from_: str
     #: The address it came for.
     to: list[str]
-    received_at: datetime | None
+    received_at: datetime
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

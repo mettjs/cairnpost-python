@@ -203,18 +203,31 @@ class AWebhook(unittest.TestCase):
         self.assertEqual(
             self.refused("a tolerance of a second", lambda: verifier(1).verify(at_edge, BOUNCE)), "stale"
         )
-        # Signed, about an email, and not saying which: refused, not handed on with nothing in it.
+        # Signed, about an email, and not saying which or when: refused,
+        # not handed on with nothing in it.
+        which = f'"email_id":"m","to":["a@example.org"],{STAMP}'
         for body in [
-            '{"type":"email.bounced",%s}' % STAMP,
-            '{"type":"email.bounced",%s,"data":{"email_id":"m","to":"a@example.org","bounce":{"type":"Permanent"}}}'
-            % STAMP,
-            '{"type":"email.bounced",%s,"data":{"email_id":"m","to":["a@example.org"]}}' % STAMP,
-            '{"type":"email.bounced",%s,"data":{"email_id":"m","to":["a@example.org"],"bounce":{}}}' % STAMP,
-            '{"type":"email.delivered",%s,"data":{"email_id":"m","to":[]}}' % STAMP,
-            '{"type":"email.delivered","data":{"email_id":"m","to":["a@example.org"]}}',
-            '{%s,"data":{"email_id":"m","to":["a@example.org"]}}' % STAMP,
+            f'{{"type":"email.bounced",{STAMP}}}',
+            f'{{"type":"email.bounced",{STAMP},"data":{{"email_id":"m","to":"a@example.org",{STAMP},"bounce":{{"type":"Permanent"}}}}}}',
+            f'{{"type":"email.bounced",{STAMP},"data":{{{which}}}}}',
+            f'{{"type":"email.bounced",{STAMP},"data":{{{which},"bounce":{{}}}}}}',
+            f'{{"type":"email.bounced",{STAMP},"data":{{{which},"bounce":{{"type":""}}}}}}',
+            f'{{"type":"email.delivered",{STAMP},"data":{{"email_id":"m","to":[],{STAMP}}}}}',
+            f'{{"type":"email.delivered",{STAMP},"data":{{"to":["a@example.org"],{STAMP}}}}}',
+            f'{{"type":"email.delivered",{STAMP},"data":{{"email_id":"m","to":["a@example.org"]}}}}',
+            f'{{"type":"email.delivered",{STAMP},"data":{{"email_id":"m","to":["a@example.org"],"created_at":"yesterday"}}}}',
+            # A time that was never set, as a server in Go writes one.
+            f'{{"type":"email.delivered",{STAMP},"data":{{"email_id":"m","to":["a@example.org"],"created_at":"0001-01-01T00:00:00Z"}}}}',
+            f'{{"type":"email.delivered","created_at":"0001-01-01T00:00:00Z","data":{{{which}}}}}',
+            f'{{"type":"email.delivered","data":{{{which}}}}}',
+            f'{{{STAMP},"data":{{{which}}}}}',
         ]:
             self.assertEqual(self.refused(body, lambda body=body: signed(v, "p", body)), "payload", body)
+        # Each of those is whole with what it lacked.
+        for kind in ["email.delivered", "email.delivery_delayed", "email.complained", "email.failed"]:
+            e = signed(v, "p", f'{{"type":"{kind}",{STAMP},"data":{{{which}}}}}')
+            assert e.email is not None
+            self.assertEqual(e.email.created_at, datetime(2030, 1, 1, 0, 0, 5, tzinfo=UTC), kind)
         # No secret, no verifier: nothing signed with no key at all is ever taken.
         for bad in [
             "",
@@ -270,8 +283,17 @@ class AWebhook(unittest.TestCase):
                 ),
             ),
         )
-        nameless = '{"type":"email.received","created_at":"2030-01-01T00:00:00Z","data":{"from":"a@example.org","to":["help@example.com"]}}'
-        self.assertEqual(self.refused("no id", lambda: signed(v, "dlv-1", nameless)), "payload")
+        # One that does not say which, for whom or when is refused.
+        for data in [
+            '{"from":"a@example.org","to":["help@example.com"],"received_at":"2030-01-01T00:00:00Z"}',
+            '{"inbound_id":"in-1","from":"a@example.org","to":[],"received_at":"2030-01-01T00:00:00Z"}',
+            '{"inbound_id":"in-1","from":"a@example.org","to":["help@example.com"]}',
+            '{"inbound_id":"in-1","from":"a@example.org","to":["help@example.com"],"received_at":"0001-01-01T00:00:00Z"}',
+        ]:
+            without = f'{{"type":"email.received","created_at":"2030-01-01T00:00:00Z","data":{data}}}'
+            self.assertEqual(
+                self.refused(data, lambda without=without: signed(v, "dlv-1", without)), "payload", data
+            )
 
 
 if __name__ == "__main__":

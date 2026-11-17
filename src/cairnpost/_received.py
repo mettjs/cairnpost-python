@@ -10,7 +10,6 @@ from ._message import FileInfo, read_file
 from ._pages import LARGEST_PAGE, Page, paging, read_page, walk
 from ._read import (
     Fields,
-    Misshapen,
     a_strangers_time,
     count,
     fields,
@@ -18,6 +17,7 @@ from ._read import (
     items,
     maybe_text,
     part,
+    said,
     text,
     texts,
     time,
@@ -108,8 +108,8 @@ def _read_content(o: Fields) -> ReceivedContent:
 
 def _read_received(v: object) -> Received:
     o = fields(v)
-    r = Received(
-        id=text(o, "id"),
+    return Received(
+        id=said(o, "id"),
         to=text(o, "to"),
         from_=maybe_text(o, "from"),
         received_at=time(o, "received_at"),
@@ -117,9 +117,6 @@ def _read_received(v: object) -> Received:
         size=count(o, "size"),
         content=part(o, "content", _read_content),
     )
-    if r.id == "":
-        raise Misshapen
-    return r
 
 
 class ReceivedEmails:

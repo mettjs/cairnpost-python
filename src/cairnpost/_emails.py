@@ -1,21 +1,39 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 
 from ._answer import place_of, reading
 from ._batch import BatchResult, read_batch
 from ._email import Email, Sent, idempotency, instant, read_sent, wire_of
-from ._message import Message, read_message
-from ._read import Misshapen, named
+from ._message import Message, State, read_message
+from ._read import Fields, Misshapen, fields, maybe_time, text
 from ._transport import Call, Transport
 
 
-def _a_message(v: object) -> Message:
-    m = read_message(v)
-    if m.id == "":
+def _about(v: object, id: str) -> Fields:
+    """Holds the answer to a change of an email to naming that email.
+
+    It gives the answer to be held to saying what was changed. Only
+    CairnPost's own word that it was changed counts: an answer about
+    anything else, the email's own record among them, is not one.
+    """
+    o = fields(v)
+    if text(o, "id") != id:
         raise Misshapen
-    return m
+    return o
+
+
+def _cancelled(v: object, id: str) -> None:
+    if text(_about(v, id), "state") != State.CANCELLED:
+        raise Misshapen
+
+
+def _moved(v: object, id: str, to: datetime) -> None:
+    # The email's own record is at the path a move is asked at, and says
+    # the time it had: only the time asked for says it was moved.
+    if maybe_time(_about(v, id), "scheduled_at") != to:
+        raise Misshapen
 
 
 class Emails:
@@ -77,7 +95,7 @@ class Emails:
         is none: the id is wrong, another key's, or its record was deleted
         after the server's retention.
         """
-        return reading(self._t.read_json(Call(method="GET", path=("emails", id))), _a_message)
+        return reading(self._t.read_json(Call(method="GET", path=("emails", id))), read_message)
 
     def cancel(self, id: str) -> None:
         """Ends the wait of an email that was asked for with `scheduled_at`.
@@ -88,10 +106,8 @@ class Emails:
         or was cancelled) is a `CairnPostError` with the code
         `not_scheduled`.
         """
-        # Only CairnPost's own word that it is cancelled counts.
-        reading(
-            self._t.read_json(Call(method="POST", path=("emails", id, "cancel"))), lambda v: named(v, "id")
-        )
+        k = Call(method="POST", path=("emails", id, "cancel"))
+        reading(self._t.read_json(k), lambda v: _cancelled(v, id))
 
     def reschedule(self, id: str, at: datetime) -> None:
         """Gives an email that waits another time to be sent at.
@@ -100,7 +116,10 @@ class Emails:
         time it cannot be sent at.
         """
         k = Call(method="PATCH", path=("emails", id), body={"scheduled_at": instant(at)})
-        reading(self._t.read_json(k), lambda v: named(v, "id"))
+        # The instant, in UTC: a time in the hour a clock is set back is
+        # equal to none in another zone, as the language compares them.
+        to = at.astimezone(UTC)
+        reading(self._t.read_json(k), lambda v: _moved(v, id, to))
 
     def file(self, id: str, place: int) -> bytes:
         """Reads what one of an email's files held, as it was sent.

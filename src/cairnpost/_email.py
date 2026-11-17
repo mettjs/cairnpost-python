@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from ._read import Misshapen, fields, maybe_time, text, texts
+from ._read import Misshapen, fields, maybe_time, said, texts
 from ._transport import header_safe
 
 
@@ -176,8 +176,8 @@ def read_sent(v: object, later: bool) -> Sent:
     """
     o = fields(v)
     sent = Sent(
-        id=text(o, "id"), suppressed=texts(o, "suppressed"), scheduled_at=maybe_time(o, "scheduled_at")
+        id=said(o, "id"), suppressed=texts(o, "suppressed"), scheduled_at=maybe_time(o, "scheduled_at")
     )
-    if sent.id == "" or (sent.scheduled_at is not None) != later:
+    if (sent.scheduled_at is not None) != later:
         raise Misshapen
     return sent

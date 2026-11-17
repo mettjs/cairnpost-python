@@ -312,15 +312,16 @@ class Hook(BaseHTTPRequestHandler):
 - `event.email` is set for `email.delivered`, `email.delivery_delayed`,
   `email.bounced`, `email.complained` and `email.failed`, and
   `event.email.bounce_type` for `email.bounced`; a webhook of those types
-  that lacks them is refused (`"payload"`). `event.email` is `None`
+  that lacks them, or does not say when its email was made
+  (`event.email.created_at`), is refused (`"payload"`). `event.email` is `None`
   for `webhook.test`, the webhook sent to try an endpoint out. A type this
   client does not know is passed on as it is, with what could be read of it.
 - `event.email.to` holds the one address the event is about, also when the
   email went to several; `event.email.id` is the email's one id.
 - `email.received` (`EventType.RECEIVED`) tells of an email that came for
   one of your addresses, where the server takes them. It is about no email
-  you sent: `event.received` says who it is from and for, and the id to read
-  it by (see "Receiving email"). An endpoint that hears about every event
+  you sent: `event.received` says who it is from and for, when it came, and
+  the id to read it by (see "Receiving email"). An endpoint that hears about every event
   gets these too.
 - `address.suppressed` (`EventType.ADDRESS_SUPPRESSED`) tells of an address
   suppressed because of a bounce or a complaint about an email the server
@@ -435,7 +436,7 @@ Keyword arguments of `CairnPost(base_url, api_key, ...)`:
 | Option | Does |
 |---|---|
 | `timeout` | How long a call may take, in seconds (150 by default). Keep it above the server's send and batch timeouts. |
-| `max_answer_bytes` | How much of an answer is read (64 MiB by default). A larger one is an error that says so. |
+| `max_answer_bytes` | How much of an answer is read (64 MiB by default). A larger one is an error that says so. A refusal is not counted: 64 KiB of one are read, and a longer one is its status alone. |
 | `user_agent` | Put your application's name before the client's in `User-Agent`. |
 | `tls` | An `ssl.SSLContext`, to trust a server by other certificates than the system's. |
 

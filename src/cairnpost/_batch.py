@@ -7,7 +7,7 @@ from ._codes import known
 from ._email import Sent, read_sent
 from ._errors import CairnPostError
 from ._problem import problem_from
-from ._read import Misshapen, fields, items
+from ._read import Misshapen, fields, has, items
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -33,7 +33,7 @@ def read_batch(v: object, later: Sequence[bool]) -> list[BatchResult]:
     One that does not answer for each email asked is not CairnPost's:
     which emails went is not known.
     """
-    results = items(fields(v), "data", fields)
+    results = items(has(fields(v), "data"), "data", fields)
     if len(results) != len(later):
         raise Misshapen
     return [_one(o, waits) for o, waits in zip(results, later, strict=True)]

@@ -13,6 +13,11 @@ from cairnpost import CairnPost, Email
 
 KEY = "cp_test_KEYMARK"
 EMAIL = Email(from_="a@example.com", to=["b@example.org"], subject="s", text="t")
+#: What a server that is up says of itself.
+UP = (
+    '{"status":"ok","driver":"capture","version":"dev","events":"off","webhooks":"sending",'
+    '"pruning":"running","scheduled":"sending","inbound":"off"}'
+)
 
 
 @dataclass(frozen=True)

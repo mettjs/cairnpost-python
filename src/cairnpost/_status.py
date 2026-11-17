@@ -6,7 +6,6 @@ from datetime import datetime
 from ._message import FileInfo, read_file
 from ._read import (
     Fields,
-    Misshapen,
     count,
     fields,
     flag,
@@ -15,6 +14,7 @@ from ._read import (
     maybe_text,
     maybe_time,
     part,
+    said,
     text,
     text_map,
     texts,
@@ -104,32 +104,31 @@ def _read_quota(q: Fields) -> Quota:
 
 
 def read_limits(v: object) -> Limits:
-    o = has(fields(v), "driver")
-    return Limits(driver=text(o, "driver"), quota=part(o, "quota", _read_quota))
+    o = fields(v)
+    return Limits(driver=said(o, "driver"), quota=part(o, "quota", _read_quota))
 
 
 def read_health(v: object) -> Health:
     o = fields(v)
-    h = Health(
-        status=text(o, "status"),
-        driver=text(o, "driver"),
-        version=text(o, "version"),
-        events=text(o, "events"),
-        webhooks=text(o, "webhooks"),
-        pruning=text(o, "pruning"),
-        scheduled=text(o, "scheduled"),
-        inbound=text(o, "inbound"),
+    # A server says how it is, what it sends with, which version it is
+    # and how each of its parts is doing; anything else that answers "ok"
+    # here does not.
+    return Health(
+        status=said(o, "status"),
+        driver=said(o, "driver"),
+        version=said(o, "version"),
+        events=said(o, "events"),
+        webhooks=said(o, "webhooks"),
+        pruning=said(o, "pruning"),
+        scheduled=said(o, "scheduled"),
+        inbound=said(o, "inbound"),
     )
-    # Anything that does not say how it is is not a CairnPost server.
-    if h.status == "":
-        raise Misshapen
-    return h
 
 
 def _read_one(v: object) -> CapturedEmail:
     o = fields(v)
     return CapturedEmail(
-        id=text(o, "id"),
+        id=said(o, "id"),
         at=time(o, "at"),
         from_=text(o, "from"),
         from_name=maybe_text(o, "from_name"),

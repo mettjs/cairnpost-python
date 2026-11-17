@@ -44,10 +44,12 @@ def has(o: Fields, *keys: str) -> Fields:
     return o
 
 
-def named(v: object, key: str) -> None:
-    """Holds an answer to saying the text CairnPost always says in it."""
-    if text(fields(v), key) == "":
+def said(o: Fields, key: str) -> str:
+    """A text that must be there: what names a record is never empty."""
+    v = maybe_text(o, key)
+    if v is None:
         raise Misshapen
+    return v
 
 
 def maybe_text(o: Fields, key: str) -> str | None:
@@ -89,9 +91,13 @@ def flag(o: Fields, key: str) -> bool:
 # A time as CairnPost writes one: RFC 3339, with a zone.
 _STAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})", re.ASCII)
 
+# How a time that was never set is written by a server in Go: the first
+# instant of the year 1.
+_UNSET = datetime(1, 1, 1, tzinfo=UTC)
+
 
 def maybe_time(o: Fields, key: str) -> datetime | None:
-    """A time, in UTC; None when it is not there."""
+    """A time, in UTC; None when it is not there, or was never set."""
     v = o.get(key)
     if v is None:
         return None
@@ -102,7 +108,7 @@ def maybe_time(o: Fields, key: str) -> datetime | None:
         at = datetime.fromisoformat(v).astimezone(UTC)
     if at is None:
         raise Misshapen
-    return at
+    return None if at == _UNSET else at
 
 
 def a_strangers_time(o: Fields, key: str) -> datetime | None:
