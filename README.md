@@ -442,8 +442,8 @@ Keyword arguments of `CairnPost(base_url, api_key, ...)`:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/mettjs/cairnpost-python/blob/main/CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/mettjs/cairnpost-python/blob/main/LICENSE)
