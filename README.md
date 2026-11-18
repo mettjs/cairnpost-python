@@ -15,11 +15,12 @@ the email that comes in, and verifies the webhooks CairnPost sends.
 It uses the standard library only, is fully typed, and needs Python 3.11 or
 later.
 
-**Status: early, and not released yet.** It is built for CairnPost 0.1.1 and
-is not on PyPI. Until it is, install it from this repository:
+**Status: early.** This is 0.1.0, for CairnPost 0.1.1. The
+[changelog](https://github.com/mettjs/cairnpost-python/blob/main/CHANGELOG.md) says
+what exists.
 
 ```sh
-pip install git+https://github.com/mettjs/cairnpost-python
+pip install cairnpost
 ```
 
 ## Send an email

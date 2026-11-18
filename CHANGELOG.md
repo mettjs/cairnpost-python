@@ -6,6 +6,8 @@ Every change a user of this client can notice is written here. The format is
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-17
+
 ### Added
 
 - The client, for CairnPost 0.1.1: `CairnPost(base_url, api_key)`, on the
@@ -29,4 +31,5 @@ Every change a user of this client can notice is written here. The format is
   come in) and `captured`.
 - `health` and `limits`.
 
-[Unreleased]: https://github.com/mettjs/cairnpost-python/commits/main
+[Unreleased]: https://github.com/mettjs/cairnpost-python/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mettjs/cairnpost-python/releases/tag/v0.1.0
