@@ -1,0 +1,250 @@
+{
+  "cases": [
+    {
+      "name": "an email that can never be sent",
+      "call": "emails.send",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "validation_error", "message": "The subject is missing."}},
+      "want": {"status": 422, "code": "validation_error", "detail": "The subject is missing.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a sending domain that is not set up",
+      "call": "emails.send",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "sender_domain_not_ready", "message": "Not set up.", "id": "msg-9"}},
+      "want": {"status": 422, "code": "sender_domain_not_ready", "detail": "Not set up.", "email_id": "msg-9", "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the mail provider refused the email",
+      "call": "emails.send",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "rejected_by_upstream", "message": "Refused.", "id": "msg-9"}},
+      "want": {"status": 422, "code": "rejected_by_upstream", "detail": "Refused.", "email_id": "msg-9", "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a suppressed address, after an earlier try that may have gone",
+      "call": "emails.send",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "recipient_suppressed", "message": "Suppressed.", "id": "msg-9"}},
+      "want": {"status": 422, "code": "recipient_suppressed", "detail": "Suppressed.", "email_id": "msg-9", "retry_after": null, "retryable": false, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a suppressed address, with no earlier try",
+      "call": "emails.send",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "recipient_suppressed", "message": "Suppressed."}},
+      "want": {"status": 422, "code": "recipient_suppressed", "detail": "Suppressed.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a key used for another email",
+      "call": "emails.send",
+      "answer": {"status": 409, "json": {"statusCode": 409, "name": "invalid_idempotent_request", "message": "Used."}},
+      "want": {"status": 409, "code": "invalid_idempotent_request", "detail": "Used.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the same send still under way",
+      "call": "emails.send",
+      "answer": {"status": 409, "json": {"statusCode": 409, "name": "concurrent_idempotent_requests", "message": "In flight."}, "headers": {"Retry-After": "7"}},
+      "want": {"status": 409, "code": "concurrent_idempotent_requests", "detail": "In flight.", "email_id": null, "retry_after": 7, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "changed by others meanwhile",
+      "call": "templates.update",
+      "answer": {"status": 409, "json": {"statusCode": 409, "name": "changed_meanwhile", "message": "Changed."}},
+      "want": {"status": 409, "code": "changed_meanwhile", "detail": "Changed.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a name that is taken",
+      "call": "templates.create",
+      "answer": {"status": 409, "json": {"statusCode": 409, "name": "name_taken", "message": "Taken."}},
+      "want": {"status": 409, "code": "name_taken", "detail": "Taken.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "an email that no longer waits",
+      "call": "emails.cancel",
+      "answer": {"status": 409, "json": {"statusCode": 409, "name": "not_scheduled", "message": "Sent already."}},
+      "want": {"status": 409, "code": "not_scheduled", "detail": "Sent already.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a request that did not arrive whole",
+      "call": "emails.send",
+      "answer": {"status": 408, "json": {"statusCode": 408, "name": "request_incomplete", "message": "Not whole."}},
+      "want": {"status": 408, "code": "request_incomplete", "detail": "Not whole.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a 408 from something in between",
+      "call": "emails.send",
+      "answer": {"status": 408, "text": "<html>request timeout</html>"},
+      "want": {"status": 408, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "over the limit",
+      "call": "emails.send",
+      "answer": {"status": 429, "json": {"statusCode": 429, "name": "rate_limit_exceeded", "message": "Limit.", "id": "msg-2"}, "headers": {"Retry-After": "30"}},
+      "want": {"status": 429, "code": "rate_limit_exceeded", "detail": "Limit.", "email_id": "msg-2", "retry_after": 30, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the mail provider's answer was lost",
+      "call": "emails.send",
+      "answer": {"status": 502, "json": {"statusCode": 502, "name": "upstream_unknown", "message": "Lost.", "id": "msg-3"}},
+      "want": {"status": 502, "code": "upstream_unknown", "detail": "Lost.", "email_id": "msg-3", "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the mail provider is down",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "upstream_unavailable", "message": "Down."}},
+      "want": {"status": 503, "code": "upstream_unavailable", "detail": "Down.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "no room for another waiting email",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "schedule_full", "message": "Full."}},
+      "want": {"status": 503, "code": "schedule_full", "detail": "Full.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the server cannot work now",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "unavailable", "message": "Down."}},
+      "want": {"status": 503, "code": "unavailable", "detail": "Down.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "the server failed",
+      "call": "emails.send",
+      "answer": {"status": 500, "json": {"statusCode": 500, "name": "internal_error", "message": "Failed."}},
+      "want": {"status": 500, "code": "internal_error", "detail": "Failed.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a request too large",
+      "call": "emails.send",
+      "answer": {"status": 413, "json": {"statusCode": 413, "name": "request_too_large", "message": "Too large."}},
+      "want": {"status": 413, "code": "request_too_large", "detail": "Too large.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "no key",
+      "call": "emails.send",
+      "answer": {"status": 401, "json": {"statusCode": 401, "name": "missing_api_key", "message": "No key."}},
+      "want": {"status": 401, "code": "missing_api_key", "detail": "No key.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a key that is not one",
+      "call": "emails.send",
+      "answer": {"status": 401, "json": {"statusCode": 401, "name": "invalid_api_key", "message": "No."}},
+      "want": {"status": 401, "code": "invalid_api_key", "detail": "No.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a key for another domain",
+      "call": "emails.send",
+      "answer": {"status": 403, "json": {"statusCode": 403, "name": "domain_not_allowed", "message": "Not this domain."}},
+      "want": {"status": 403, "code": "domain_not_allowed", "detail": "Not this domain.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a key that is not an admin's",
+      "call": "webhooks.list",
+      "answer": {"status": 403, "json": {"statusCode": 403, "name": "admin_key_required", "message": "Admin only."}},
+      "want": {"status": 403, "code": "admin_key_required", "detail": "Admin only.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a proxy's 502",
+      "call": "emails.send",
+      "answer": {"status": 502, "text": "<html>bad gateway</html>"},
+      "want": {"status": 502, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "an error of CairnPost's shape under another name",
+      "call": "emails.send",
+      "answer": {"status": 504, "json": {"name": "GatewayTimeout", "message": "SUBJECTMARK"}},
+      "want": {"status": 504, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "an error that is a list",
+      "call": "emails.send",
+      "answer": {"status": 500, "json": ["not", "an object"]},
+      "want": {"status": 500, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a name that is a list",
+      "call": "emails.send",
+      "answer": {"status": 500, "json": {"name": ["validation_error"], "message": "SUBJECTMARK"}},
+      "want": {"status": 500, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a name every object has",
+      "call": "emails.send",
+      "answer": {"status": 500, "json": {"name": "constructor", "message": "SUBJECTMARK"}},
+      "want": {"status": 500, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": true, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a 400 that echoes what it was sent",
+      "call": "emails.send",
+      "answer": {"status": 400, "json": {"name": "BadRequestError", "message": "SUBJECTMARK"}},
+      "want": {"status": 400, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a wait that is not a number",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "unavailable", "message": "Down."}, "headers": {"Retry-After": "soon"}},
+      "want": {"status": 503, "code": "unavailable", "detail": "Down.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a wait of less than nothing",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "unavailable", "message": "Down."}, "headers": {"Retry-After": "-5"}},
+      "want": {"status": 503, "code": "unavailable", "detail": "Down.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a wait of nothing",
+      "call": "emails.send",
+      "answer": {"status": 503, "json": {"statusCode": 503, "name": "unavailable", "message": "Down."}, "headers": {"Retry-After": "0"}},
+      "want": {"status": 503, "code": "unavailable", "detail": "Down.", "email_id": null, "retry_after": null, "retryable": true, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a record that is not there",
+      "call": "emails.get",
+      "answer": {"status": 404, "json": {"statusCode": 404, "name": "not_found", "message": "No email has this id."}},
+      "want": {"status": 404, "code": "not_found", "detail": "No email has this id.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": true, "wrong_address": false}
+    },
+    {
+      "name": "a path that is not there",
+      "call": "emails.get",
+      "answer": {"status": 404, "json": {"statusCode": 404, "name": "route_not_found", "message": "There is nothing at this path. Check the path and the server's address."}},
+      "want": {"status": 404, "code": "route_not_found", "detail": "There is nothing at this path. Check the path and the server's address.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "a method the path refuses",
+      "call": "emails.get",
+      "answer": {"status": 405, "json": {"statusCode": 405, "name": "method_not_allowed", "message": "This path does not take PUT. It takes: POST."}},
+      "want": {"status": 405, "code": "method_not_allowed", "detail": "This path does not take PUT. It takes: POST.", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "a proxy's own 404",
+      "call": "emails.get",
+      "answer": {"status": 404, "text": "<html>not here</html>"},
+      "want": {"status": 404, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "a proxy's own 405",
+      "call": "emails.get",
+      "answer": {"status": 405, "text": ""},
+      "want": {"status": 405, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "a refusal that is neither",
+      "call": "suppressions.list",
+      "answer": {"status": 422, "json": {"statusCode": 422, "name": "validation_error", "message": "no"}},
+      "want": {"status": 422, "code": "validation_error", "detail": "no", "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": false}
+    },
+    {
+      "name": "a redirect",
+      "call": "emails.get",
+      "answer": {"status": 308, "text": "", "headers": {"Location": "/elsewhere"}},
+      "want": {"status": 308, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "a redirect of a send",
+      "call": "emails.send",
+      "answer": {"status": 301, "text": "", "headers": {"Location": "/elsewhere"}},
+      "want": {"status": 301, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    },
+    {
+      "name": "health at a wrong address",
+      "call": "health",
+      "answer": {"status": 404, "text": "<html>not here</html>"},
+      "want": {"status": 404, "code": null, "detail": null, "email_id": null, "retry_after": null, "retryable": false, "may_have_sent": false, "not_found": false, "wrong_address": true}
+    }
+  ]
+}
