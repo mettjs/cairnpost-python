@@ -306,7 +306,7 @@ class ABatch(unittest.TestCase):
             {"error":{"statusCode":429,"name":"rate_limit_exceeded","message":"Limit.","id":"m2","retry_after":30}},
             {"id":"m3","scheduled_at":"2030-01-02T00:00:00Z"},
             {"error":{"statusCode":503,"name":"not_started","message":"Its turn did not come."}},
-            {"error":{"statusCode":502,"name":"SomethingNew","message":"SUBJECTMARK","id":"m5"}}]}""",
+            {"error":{"statusCode":502,"name":"SomethingNew","message":"SUBJECTMARK","id":"m5","retry_after":9}}]}""",
         )
         later = Email(from_="a@example.com", to=["b@example.org"], subject="s", text="t", scheduled_at=when)
         results = s.client.emails.send_batch([EMAIL, EMAIL, later, EMAIL, EMAIL], idempotency_key="run-1")
@@ -334,6 +334,7 @@ class ABatch(unittest.TestCase):
             (unknown.status, unknown.code, unknown.detail, unknown.email_id, may_have_sent(unknown)),
             (502, None, None, None, True),
         )
+        self.assertIsNone(unknown.retry_after, "a wait said under a name this client does not know")
         self.assertEqual(failed(results), 3)
 
     def test_one_refused_whole_is_an_error_and_one_with_a_key_on_an_email_is_not_sent(self) -> None:
