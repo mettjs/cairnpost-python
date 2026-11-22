@@ -3,7 +3,7 @@
   "now": 1893456010,
   "secrets": {
     "taken": ["whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz", " whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz\n"],
-    "refused": ["", "c2VjcmV0", "whsec_", "whsec_not base64!", "whsec_c2VjcmV0!"]
+    "refused": ["", "c2VjcmV0", "whsec_", "whsec_not base64!", "whsec_c2VjcmV0!", "whsec_c2Vj\ncmV0", "whsec_c2Vj\rcmV0", "whsec_c2Vj\r\ncmV0", "whsec_c2Vj cmV0", "whsec_c2VjcmU", "whsec_c2Vj-m_0"]
   },
   "cases": [
     {
