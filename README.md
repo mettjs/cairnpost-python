@@ -15,7 +15,7 @@ the email that comes in, and verifies the webhooks CairnPost sends.
 It uses the standard library only, is fully typed, and needs Python 3.11 or
 later.
 
-**Status: early.** This is 0.1.0, for CairnPost 0.1.1. The
+**Status: early.** This is 0.1.1, for CairnPost 0.1.1. The
 [changelog](https://github.com/mettjs/cairnpost-python/blob/main/CHANGELOG.md) says
 what exists.
 
