@@ -1,0 +1,396 @@
+{
+  "secret": "whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz",
+  "now": 1893456010,
+  "secrets": {
+    "taken": ["whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz", " whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz\n"],
+    "refused": ["", "c2VjcmV0", "whsec_", "whsec_not base64!", "whsec_c2VjcmV0!"]
+  },
+  "cases": [
+    {
+      "name": "a bounce, under the standard header names",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "a bounce, under Svix's header names",
+      "headers": {"svix-id": "dlv-1", "svix-timestamp": "1893456010", "svix-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "header names in any case, a signature with space around it",
+      "headers": {"Webhook-Id": "dlv-1", "WEBHOOK-TIMESTAMP": "1893456010", "webhook-signature": " v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0= "},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "two signatures, ours last",
+      "headers": {"svix-id": "dlv-1", "svix-timestamp": "1893456010", "svix-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU= v2,zzz v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "two signatures, ours first",
+      "headers": {"svix-id": "dlv-1", "svix-timestamp": "1893456010", "svix-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0= v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "email.delivered, with no more than the server always says",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,AC9D0KcqKm2lVyYDyQg5NCN2XQY9Hafz5Aaj7zZdw5o="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"from\":\"app@example.com\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"suppressed\":false}}",
+      "want": {"event": {"id": "p", "type": "email.delivered", "at": "2030-01-01T00:00:05Z", "email": {"id": "m", "from": "app@example.com", "to": ["a@example.org"], "created_at": "2030-01-01T00:00:05Z", "code": "", "reason": "", "bounce": "", "suppressed": false}}}
+    },
+    {
+      "name": "email.delivery_delayed, with no more than the server always says",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,b+y1UCd0ZFYQOmOLkmaNBbMlVWTq0LmOpR1zNiBtnYE="},
+      "body": "{\"type\":\"email.delivery_delayed\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"from\":\"app@example.com\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"suppressed\":false}}",
+      "want": {"event": {"id": "p", "type": "email.delivery_delayed", "at": "2030-01-01T00:00:05Z", "email": {"id": "m", "from": "app@example.com", "to": ["a@example.org"], "created_at": "2030-01-01T00:00:05Z", "code": "", "reason": "", "bounce": "", "suppressed": false}}}
+    },
+    {
+      "name": "email.complained, with no more than the server always says",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,7bYTC8KFNf9nGBcWOshYeBFYdb/v1tLsvOZQFdHRO8o="},
+      "body": "{\"type\":\"email.complained\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"from\":\"app@example.com\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"suppressed\":false}}",
+      "want": {"event": {"id": "p", "type": "email.complained", "at": "2030-01-01T00:00:05Z", "email": {"id": "m", "from": "app@example.com", "to": ["a@example.org"], "created_at": "2030-01-01T00:00:05Z", "code": "", "reason": "", "bounce": "", "suppressed": false}}}
+    },
+    {
+      "name": "email.failed, with no more than the server always says",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,e6o2q/NIOwD68Ij0nDr38yb+cXwuEZD8MbNXLWw1kjM="},
+      "body": "{\"type\":\"email.failed\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"from\":\"app@example.com\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"suppressed\":false}}",
+      "want": {"event": {"id": "p", "type": "email.failed", "at": "2030-01-01T00:00:05Z", "email": {"id": "m", "from": "app@example.com", "to": ["a@example.org"], "created_at": "2030-01-01T00:00:05Z", "code": "", "reason": "", "bounce": "", "suppressed": false}}}
+    },
+    {
+      "name": "the test webhook, about no email",
+      "headers": {"webhook-id": "t", "webhook-timestamp": "1893456010", "webhook-signature": "v1,ESuxiKg6pu/2cktgx0DG+gHZjUpZ58kwFm+fuLptkMA="},
+      "body": "{\"type\":\"webhook.test\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{}}",
+      "want": {"event": {"id": "t", "type": "webhook.test", "at": "2030-01-01T00:00:05Z"}}
+    },
+    {
+      "name": "a suppression told on its own",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,RMEKuCKmEHqkudfCDK+QktaaY71065lVS2cRz1SkOxc="},
+      "body": "{\"type\":\"address.suppressed\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"domain\":\"example.com\",\"address\":\"ana@example.org\",\"reason\":\"bounce\"}}",
+      "want": {"event": {"id": "dlv-1", "type": "address.suppressed", "at": "2030-01-01T00:00:00Z", "suppression": {"domain": "example.com", "address": "ana@example.org", "reason": "bounce"}}}
+    },
+    {
+      "name": "an email that came, from a mail server's own notice",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,FMxMaHvMFV/ypeWP8PMxVyhIbK/lQJKO1uj2+pGU7pg="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\",\"from\":\"\",\"to\":[\"help@example.com\"],\"received_at\":\"2030-01-01T00:00:00Z\"}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.received", "at": "2030-01-01T00:00:00Z", "received": {"id": "in-1", "from": "", "to": ["help@example.com"], "received_at": "2030-01-01T00:00:00Z"}}}
+    },
+    {
+      "name": "a type not known that names an email",
+      "headers": {"webhook-id": "n", "webhook-timestamp": "1893456010", "webhook-signature": "v1,V3lE3WpO653Y4UvFbG1Z8I3YZdUqb8rpYxb4WCCcunk="},
+      "body": "{\"type\":\"email.opened\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"]}}",
+      "want": {"event": {"id": "n", "type": "email.opened", "at": "2030-01-01T00:00:05Z", "email": {"id": "m", "from": "", "to": ["a@example.org"], "created_at": "", "code": "", "reason": "", "bounce": "", "suppressed": false}}}
+    },
+    {
+      "name": "a type not known that names no email",
+      "headers": {"webhook-id": "n", "webhook-timestamp": "1893456010", "webhook-signature": "v1,yiLh+2bT1li7McVZ6emW0oIpB8ZXvqjLDwDugHfh9DM="},
+      "body": "{\"type\":\"email.opened\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"link\":\"x\"}}",
+      "want": {"event": {"id": "n", "type": "email.opened", "at": "2030-01-01T00:00:05Z"}}
+    },
+    {
+      "name": "a type not known with no data",
+      "headers": {"webhook-id": "n", "webhook-timestamp": "1893456010", "webhook-signature": "v1,1h15E42KpRGKC5k7Gb6Aevv9vp3CXxgUrsevd828FN4="},
+      "body": "{\"type\":\"email.opened\",\"created_at\":\"2030-01-01T00:00:05Z\"}",
+      "want": {"event": {"id": "n", "type": "email.opened", "at": "2030-01-01T00:00:05Z"}}
+    },
+    {
+      "name": "a type not known about an email that came",
+      "headers": {"webhook-id": "n", "webhook-timestamp": "1893456010", "webhook-signature": "v1,AX46YNQwURfb1JFNKV15UKNVDKBtQ+w7kgkujujXnRI="},
+      "body": "{\"type\":\"email.forwarded\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"inbound_id\":\"in-1\"}}",
+      "want": {"event": {"id": "n", "type": "email.forwarded", "at": "2030-01-01T00:00:05Z"}}
+    },
+    {
+      "name": "a type not known about no email",
+      "headers": {"webhook-id": "n", "webhook-timestamp": "1893456010", "webhook-signature": "v1,gCYATTUvluAikYq/40lvqiIygpkqwvbtAOON0x8sXYY="},
+      "body": "{\"type\":\"domain.verified\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"domain\":\"example.com\"}}",
+      "want": {"event": {"id": "n", "type": "domain.verified", "at": "2030-01-01T00:00:05Z"}}
+    },
+    {
+      "name": "at the edge of the time allowed",
+      "headers": {"webhook-id": "e", "webhook-timestamp": "1893455710", "webhook-signature": "v1,92Q/55g9ojyybZpVo5ftBlU2zQOCNeFlkh9dHyNsFI4="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "e", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "at the edge, ahead",
+      "headers": {"webhook-id": "e", "webhook-timestamp": "1893456310", "webhook-signature": "v1,uxmFPJhQ3breRjkHOUpZmuyXeyb+x9G7lwCPXJvSe4U="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "e", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "an old webhook",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893455709", "webhook-signature": "v1,PM4eNIR6g3opiVjFtBU+CqhzxSXjwfh7rYIJ3xFX5b0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "stale"}
+    },
+    {
+      "name": "one from the future",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456311", "webhook-signature": "v1,2IjBj/+bpL3RkLtrXBS1xoOn0feATU6WDOukeDihpz4="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "stale"}
+    },
+    {
+      "name": "older than a time allowed of one second",
+      "headers": {"webhook-id": "e", "webhook-timestamp": "1893455710", "webhook-signature": "v1,92Q/55g9ojyybZpVo5ftBlU2zQOCNeFlkh9dHyNsFI4="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "tolerance": 1,
+      "want": {"refused": "stale"}
+    },
+    {
+      "name": "within a time allowed of an hour",
+      "headers": {"webhook-id": "e", "webhook-timestamp": "1893453010", "webhook-signature": "v1,DinqgNeqzOwECrQCbnkmv0ZwaovxMEeyDGn/kUGCx0A="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "tolerance": 3600,
+      "want": {"event": {"id": "e", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "signed with another key",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a changed body",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}} ",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "another id",
+      "headers": {"webhook-id": "dlv-2", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a moved timestamp",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456011", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature that is not base64",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,not base64!"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature cut short",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJN"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature with more after it",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=!!"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature under another version",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v2,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature made with no key",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,G9u4Nk6l/Ei7u1aneGA8DQzLPg5oL3QT9bNsg33fRyc="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "no headers",
+      "headers": {},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "no id",
+      "headers": {"webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "no signature",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time that is a word",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "now", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time in another form",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1.89e9", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time in other digits",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "١٨٩٣٤٥٦٠١٠", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "signed, not JSON",
+      "headers": {"webhook-id": "x", "webhook-timestamp": "1893456010", "webhook-signature": "v1,x6dz+Bg51NLrC3kXNJPQjk7KvEi7Ksje0MpBNl16iLU="},
+      "body": "hello",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "signed, a list",
+      "headers": {"webhook-id": "x", "webhook-timestamp": "1893456010", "webhook-signature": "v1,HGIFOSlsUOShZ/3v04bcvF8nBuFqHmIg5sfoG4gqIrY="},
+      "body": "[]",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a bounce with no data",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,39nKRrPL9a0kCFsLc1m2pPRUd0hWNU/VMEnP4EofX8U="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\"}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a recipient that is not a list",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,CIaKmuUM5Pnezlwljc9w7BrYsqq84J9ExgHVjb+0h0s="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":\"a@example.org\",\"created_at\":\"2030-01-01T00:00:05Z\",\"bounce\":{\"type\":\"Permanent\"}}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a bounce that does not say its kind",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,8RlamML8FbpsRkWuhhN0wkUOgXG2Bn/zity3Rk6S4d4="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a bounce whose kind is an empty object",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,ahF69fJCStk5dYIiEh1Y5C0+8GMibbO8tMw2AOlk+As="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"bounce\":{}}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a bounce of an empty kind",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,yuh89CT+uYQf0m46Gf65VPkMQt1aegnZebKAeSX5dCM="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\",\"bounce\":{\"type\":\"\"}}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event for nobody",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,9Q/DRjrgxfL8nTKp1PBpW0qlrjI1bmTkv0MN7HILyYM="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event that names no email",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,Ib4+RZUnp0s2K9DOjgFXKRrH2NqRgTE45lwjlNLgtjU="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that does not say when it was made",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,QbUbLdr5UsfQqOLfOvO1lopGM1seOg5OSaQH4m6qLe8="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"]}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email made at a time that is none",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,jNFMeMA48IFD4clb086YtUxXVyihYQWwfyrl24rfX9Y="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"yesterday\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email made at a time that was never set",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,krvrxz7CkWlbPDyBtP753Z2ApZGxekbMKQUre92Bgv8="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"0001-01-01T00:00:00Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event at a time that was never set",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,VketbN1C38xZDiRhkB7XCIF8baUbRiR7cualilE5HAI="},
+      "body": "{\"type\":\"email.delivered\",\"created_at\":\"0001-01-01T00:00:00Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event that does not say when",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,xijImT1YUV5Ys5xCJN7qISyCfcocJEKjeVYWMJiEUtw="},
+      "body": "{\"type\":\"email.delivered\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event at a time that is null",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,aT1MSOvdQqgFwVEapj1bP1AdEZd0ji2k/83CUhrPxnY="},
+      "body": "{\"type\":\"webhook.test\",\"created_at\":null}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an event of no type",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,NF9zIWEck45y0vgGUwbtBa/tFmFSILX1MgXeE5BxO14="},
+      "body": "{\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m\",\"to\":[\"a@example.org\"],\"created_at\":\"2030-01-01T00:00:05Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a suppression that says nothing",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,Wo6cuihkmvcMOp1Tg8tLpF8JiYnk6GgkO9XdhyjpzxA="},
+      "body": "{\"type\":\"address.suppressed\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a suppression that names no address",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,528omYVqenKrzp0vrLUvEFPaPaGt/YymtPsbtWpWDIw="},
+      "body": "{\"type\":\"address.suppressed\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"domain\":\"example.com\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "a suppression that gives no reason",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,ijijT19w8MBOkqqBAyfsG03IgCWIGB2bFoX1iQye8yE="},
+      "body": "{\"type\":\"address.suppressed\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"domain\":\"example.com\",\"address\":\"ana@example.org\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came, saying nothing",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,/hrjQAhVHP4GTMZHPIAsZbYm87CrmL3ITzDzpbAd+1I="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came, saying only which",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,RUim4lWoOdfaDpmBvQf0DQFVHXrj8MFM6VtpN5V9kpA="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came, saying only for whom",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,ixEKt9QSVtV2nKXOvBkJmYg7C2QGxaXfxqumFJJ8TzM="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"to\":[\"help@example.com\"]}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came, not saying which",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,+UL7QWBo+ew+jN2/q/0fMKxEvMGWCLSKbxV/bIjCuGU="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"from\":\"a@example.org\",\"to\":[\"help@example.com\"],\"received_at\":\"2030-01-01T00:00:00Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came for nobody",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,HAjTLv3fNGBaotR2SrqUnft+D8jGj7A8z0NH0hnJInQ="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\",\"from\":\"a@example.org\",\"to\":[],\"received_at\":\"2030-01-01T00:00:00Z\"}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came, not saying when",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,S500HzhAzP1EwrX1+4mZcnxbhX/OtSULkILFSeLwZVA="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\",\"from\":\"a@example.org\",\"to\":[\"help@example.com\"]}}",
+      "want": {"refused": "payload"}
+    },
+    {
+      "name": "an email that came at a time that was never set",
+      "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,7eZsWffKmuNo6mC1RrFV1qm8xydroCXD471vtwE29YE="},
+      "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\",\"from\":\"a@example.org\",\"to\":[\"help@example.com\"],\"received_at\":\"0001-01-01T00:00:00Z\"}}",
+      "want": {"refused": "payload"}
+    }
+  ]
+}

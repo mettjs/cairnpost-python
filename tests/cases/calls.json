@@ -1,0 +1,235 @@
+{
+  "calls": [
+    {
+      "name": "health",
+      "route": "GET /health",
+      "key": "none",
+      "sends": {"method": "GET", "path": "/health"},
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "limits",
+      "route": "GET /limits",
+      "key": "any",
+      "sends": {"method": "GET", "path": "/limits"},
+      "answer": {"status": 200, "json": {"driver": "capture", "quota": null}}
+    },
+    {
+      "name": "captured",
+      "route": "GET /capture/emails",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/capture/emails"},
+      "answer": {"status": 200, "json": {"data": [{"id": "capture-47ea9537e081450c49775756", "at": "2030-01-01T00:00:01-04:00", "from": "app@example.com", "from_name": "App", "to": ["ana@example.org"], "subject": "Welcome", "text": "Hello.", "attachments": [{"filename": "a.txt", "content_type": "text/plain", "size": 5}]}]}}
+    },
+    {
+      "name": "emails.send",
+      "route": "POST /emails",
+      "key": "any",
+      "sends": {"method": "POST", "path": "/emails", "idempotency_key": "welcome-42", "body": {"from": "App <app@example.com>", "to": ["ana@example.org"], "cc": ["ben@example.org"], "reply_to": "help@example.com", "subject": "Welcome", "text": "Hello.", "html": "<p>Hello.</p>", "headers": {"X-Entity-Ref": "42"}, "attachments": [{"filename": "a.txt", "content": "aGVsbG8=", "content_type": "text/plain"}]}},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}}
+    },
+    {
+      "name": "emails.send_batch",
+      "route": "POST /emails/batch",
+      "key": "any",
+      "sends": {"method": "POST", "path": "/emails/batch", "idempotency_key": "batch-7", "body": [{"from": "app@example.com", "to": ["ana@example.org"], "subject": "Welcome", "text": "Hello."}, {"from": "app@example.com", "to": ["ben@example.org"], "subject": "Welcome", "text": "Hello."}]},
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"id": "01a20155-ba40-7d4b-9602-3ab97a08fe52"}]}}
+    },
+    {
+      "name": "emails.get",
+      "route": "GET /emails/{id}",
+      "key": "any",
+      "sends": {"method": "GET", "path": "/emails/01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "from": "app@example.com", "to": "ana@example.org", "state": "sent", "recipients": [{"address": "ana@example.org", "kind": "to", "state": "sent", "updated_at": "2030-01-01T00:00:01Z"}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:01Z", "events": [], "content": {"from_name": "App", "subject": "Welcome", "text": "Hello.", "attachments": [{"filename": "a.txt", "content_type": "text/plain", "size": 5, "kept": true}], "kept_until": "2030-01-02T00:00:00Z"}}}
+    },
+    {
+      "name": "emails.cancel",
+      "route": "POST /emails/{id}/cancel",
+      "key": "any",
+      "sends": {"method": "POST", "path": "/emails/01a20155-8f2b-76c9-bc68-b2e7bdcd4c56/cancel"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "state": "cancelled"}}
+    },
+    {
+      "name": "emails.reschedule",
+      "route": "PATCH /emails/{id}",
+      "key": "any",
+      "sends": {"method": "PATCH", "path": "/emails/01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "body": {"scheduled_at": "2030-01-31T08:00:00Z"}},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "scheduled_at": "2030-01-31T08:00:00Z"}}
+    },
+    {
+      "name": "emails.file",
+      "route": "GET /emails/{id}/attachments/{place}",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/emails/01a20155-8f2b-76c9-bc68-b2e7bdcd4c56/attachments/1"},
+      "answer": {"status": 200, "headers": {"Content-Type": "application/octet-stream"}, "text": "hello"}
+    },
+    {
+      "name": "suppressions.list",
+      "route": "GET /suppressions",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/suppressions", "query": {"domain": "example.com", "limit": "2"}},
+      "answer": {"status": 200, "json": {"data": [{"domain": "example.com", "address": "gone@example.org", "reason": "manual", "note": "asked", "created_at": "2030-01-01T00:00:00Z"}], "next": "ZXhhbXBsZS5jb20AZ29uZUBleGFtcGxlLm9yZw"}}
+    },
+    {
+      "name": "suppressions.add",
+      "route": "POST /suppressions",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/suppressions", "body": {"domain": "example.com", "address": "gone@example.org", "note": "asked"}},
+      "answer": {"status": 201, "json": {"added": true, "address": "gone@example.org", "domain": "example.com"}}
+    },
+    {
+      "name": "suppressions.lift",
+      "route": "POST /suppressions/lift",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/suppressions/lift", "body": {"domain": "example.com", "address": "gone@example.org"}},
+      "answer": {"status": 200, "json": {"lifted": 1}}
+    },
+    {
+      "name": "suppressions.lift_all",
+      "route": "POST /suppressions/lift",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/suppressions/lift", "body": {"domain": "example.com", "all": true, "reason": "bounce"}},
+      "answer": {"status": 200, "json": {"lifted": 3}}
+    },
+    {
+      "name": "webhooks.create",
+      "route": "POST /webhooks",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/webhooks", "body": {"url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces"}},
+      "answer": {"status": 201, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z", "secret": "whsec_iq9ZYvpMH0mI8/W8ZZk7LcrqBGTOAzdHa311efU+9nE="}}
+    },
+    {
+      "name": "webhooks.list",
+      "route": "GET /webhooks",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/webhooks"},
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "webhooks.get",
+      "route": "GET /webhooks/{id}",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "webhooks.update",
+      "route": "PATCH /webhooks/{id}",
+      "key": "admin",
+      "sends": {"method": "PATCH", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "body": {"description": "Bounces and complaints", "enabled": false}},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces and complaints", "enabled": false, "created_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "webhooks.delete",
+      "route": "DELETE /webhooks/{id}",
+      "key": "admin",
+      "sends": {"method": "DELETE", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6"},
+      "answer": {"status": 204, "text": ""}
+    },
+    {
+      "name": "webhooks.rotate_secret",
+      "route": "POST /webhooks/{id}/secret",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6/secret"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z", "previous_secret_until": "2030-01-02T00:00:00Z", "secret": "whsec_hrLGTaHD0156m0t2F+oRHAC1Wv+U/fL4yzQ9wGBoibI="}}
+    },
+    {
+      "name": "webhooks.resume",
+      "route": "POST /webhooks/{id}/resume",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6/resume"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "webhooks.test",
+      "route": "POST /webhooks/{id}/test",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6/test"},
+      "answer": {"status": 200, "json": {"delivered": false, "failure": "status", "status": 500}}
+    },
+    {
+      "name": "webhooks.deliveries",
+      "route": "GET /webhooks/{id}/deliveries",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6/deliveries", "query": {"state": "pending", "limit": "2"}},
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f59-7f5a-ba31-4cfbc0f1e864", "type": "email.received", "inbound_id": "01a20155-8f58-7e44-b3a0-1fe938616579", "state": "pending", "attempts": 1, "last_status": 500, "last_failure": "status", "created_at": "2030-01-01T00:00:00Z", "attempted_at": "2030-01-01T00:00:01Z", "next_attempt_at": "2030-01-01T00:00:06Z"}]}}
+    },
+    {
+      "name": "webhooks.retry_delivery",
+      "route": "POST /webhooks/{id}/deliveries/{delivery}/retry",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/webhooks/01a20155-8f42-7fcf-bf8a-120e8aa42bf6/deliveries/01a20155-8f59-7f5a-ba31-4cfbc0f1e864/retry"},
+      "answer": {"status": 200, "json": {"state": "pending"}}
+    },
+    {
+      "name": "templates.create",
+      "route": "POST /templates",
+      "key": "admin",
+      "sends": {"method": "POST", "path": "/templates", "body": {"name": "welcome", "subject": "Hello {{name}}", "text": "Hi {{name}}.", "defaults": {"name": "there"}}},
+      "answer": {"status": 201, "json": {"id": "01a20155-9b2b-7b2a-8f83-ef332546a80b", "name": "welcome", "subject": "Hello {{name}}", "text": "Hi {{name}}.", "variables": [{"name": "name", "default": "there", "required": false}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "templates.list",
+      "route": "GET /templates",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/templates", "query": {"domain": "example.com"}},
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-9b2b-7b2a-8f83-ef332546a80b", "name": "welcome", "subject": "Hello {{name}}", "variables": [{"name": "name", "default": "there", "required": false}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:00Z"}], "more": false}}
+    },
+    {
+      "name": "templates.get",
+      "route": "GET /templates/{id}",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/templates/01a20155-9b2b-7b2a-8f83-ef332546a80b"},
+      "answer": {"status": 200, "json": {"id": "01a20155-9b2b-7b2a-8f83-ef332546a80b", "name": "welcome", "subject": "Hello {{name}}", "text": "Hi {{name}}.", "variables": [{"name": "name", "default": "there", "required": false}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "templates.update",
+      "route": "PATCH /templates/{id}",
+      "key": "admin",
+      "sends": {"method": "PATCH", "path": "/templates/01a20155-9b2b-7b2a-8f83-ef332546a80b", "body": {"subject": "Welcome {{name}}"}},
+      "answer": {"status": 200, "json": {"id": "01a20155-9b2b-7b2a-8f83-ef332546a80b", "name": "welcome", "subject": "Welcome {{name}}", "text": "Hi {{name}}.", "variables": [{"name": "name", "default": "there", "required": false}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:01Z"}}
+    },
+    {
+      "name": "templates.delete",
+      "route": "DELETE /templates/{id}",
+      "key": "admin",
+      "sends": {"method": "DELETE", "path": "/templates/01a20155-9b2b-7b2a-8f83-ef332546a80b"},
+      "answer": {"status": 204, "text": ""}
+    },
+    {
+      "name": "received.list",
+      "route": "GET /inbound",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/inbound", "query": {"limit": "2"}},
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f58-7e44-b3a0-1fe938616579", "to": "help@example.com", "from": "ana@example.org", "received_at": "2030-01-01T00:00:00Z", "kept_until": "2030-01-08T00:00:00Z", "size": 363}]}}
+    },
+    {
+      "name": "received.get",
+      "route": "GET /inbound/{id}",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/inbound/01a20155-8f58-7e44-b3a0-1fe938616579"},
+      "answer": {"status": 200, "json": {"id": "01a20155-8f58-7e44-b3a0-1fe938616579", "to": "help@example.com", "from": "ana@example.org", "received_at": "2030-01-01T00:00:00Z", "kept_until": "2030-01-08T00:00:00Z", "size": 363, "content": {"subject": "A question", "from": "Ana <ana@example.org>", "to": ["help@example.com"], "message_id": "<q1@example.org>", "date": "2030-01-01T00:00:00Z", "text": "How?", "headers": [{"name": "From", "value": "Ana <ana@example.org>"}, {"name": "Subject", "value": "A question"}], "attachments": [{"filename": "n.txt", "content_type": "text/plain", "size": 4}]}}}
+    },
+    {
+      "name": "received.raw",
+      "route": "GET /inbound/{id}/raw",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/inbound/01a20155-8f58-7e44-b3a0-1fe938616579/raw"},
+      "answer": {"status": 200, "headers": {"Content-Type": "application/octet-stream"}, "text": "From: Ana <ana@example.org>\r\nSubject: A question\r\n\r\nHow?\r\n"}
+    },
+    {
+      "name": "received.file",
+      "route": "GET /inbound/{id}/attachments/{place}",
+      "key": "admin",
+      "sends": {"method": "GET", "path": "/inbound/01a20155-8f58-7e44-b3a0-1fe938616579/attachments/1"},
+      "answer": {"status": 200, "headers": {"Content-Type": "application/octet-stream"}, "text": "note"}
+    },
+    {
+      "name": "received.delete",
+      "route": "DELETE /inbound/{id}",
+      "key": "admin",
+      "sends": {"method": "DELETE", "path": "/inbound/01a20155-8f58-7e44-b3a0-1fe938616579"},
+      "answer": {"status": 204, "text": ""}
+    }
+  ]
+}

@@ -1,0 +1,376 @@
+{
+  "refused": [
+    {
+      "name": "an empty object",
+      "calls": "all",
+      "answer": {"status": 200, "json": {}}
+    },
+    {
+      "name": "null",
+      "calls": "all",
+      "answer": {"status": 200, "text": "null"}
+    },
+    {
+      "name": "a page that is not JSON",
+      "calls": "all",
+      "answer": {"status": 200, "text": "<html>maintenance</html>"}
+    },
+    {
+      "name": "nothing at all",
+      "calls": "all",
+      "answer": {"status": 200, "text": ""}
+    },
+    {
+      "name": "every field null",
+      "calls": "all",
+      "answer": {"status": 200, "json": {"id": null, "state": null, "data": null, "added": null, "lifted": null, "delivered": null, "driver": null, "status": null, "created_at": null, "updated_at": null, "received_at": null, "kept_until": null, "more": null, "secret": null, "scheduled_at": null}}
+    },
+    {
+      "name": "a list where an object is said",
+      "calls": "all",
+      "answer": {"status": 200, "json": []}
+    },
+    {
+      "name": "a text where an object is said",
+      "calls": "all",
+      "answer": {"status": 200, "json": "done"}
+    },
+    {
+      "name": "a record that does not say when it was made",
+      "calls": ["emails.get", "captured", "suppressions.list", "webhooks.create", "webhooks.list", "webhooks.get", "webhooks.update", "webhooks.rotate_secret", "webhooks.resume", "webhooks.deliveries", "templates.create", "templates.list", "templates.get", "templates.update", "received.list", "received.get"],
+      "answer": {"status": 200, "json": {"id": "x", "more": false, "data": [{"id": "x"}]}}
+    },
+    {
+      "name": "a record in a list that does not say which it is",
+      "calls": ["webhooks.list", "templates.list", "received.list", "webhooks.deliveries", "suppressions.list"],
+      "answer": {"status": 200, "json": {"more": false, "data": [{"created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:00Z", "received_at": "2030-01-01T00:00:00Z", "kept_until": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "a captured email that does not say which it is",
+      "calls": ["captured"],
+      "answer": {"status": 200, "json": {"data": [{"at": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "a time that was never set, on an email",
+      "calls": ["emails.get"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "from": "app@example.com", "to": "ana@example.org", "state": "sent", "recipients": [{"address": "ana@example.org", "kind": "to", "state": "sent", "updated_at": "2030-01-01T00:00:01Z"}], "created_at": "0001-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:01Z", "events": [], "content": {"from_name": "App", "subject": "Welcome", "text": "Hello.", "attachments": [{"filename": "a.txt", "content_type": "text/plain", "size": 5, "kept": true}], "kept_until": "2030-01-02T00:00:00Z"}}}
+    },
+    {
+      "name": "a time that was never set, on an endpoint",
+      "calls": ["webhooks.get"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "0001-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "a send answered with an empty id",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": ""}}
+    },
+    {
+      "name": "a send answered with an id that is a number",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": 7}}
+    },
+    {
+      "name": "a send answered with an id that is a truth",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": true}}
+    },
+    {
+      "name": "a send answered with a wait that was not asked for",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "scheduled_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "a send answered with left-out addresses that are not a list",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "suppressed": "all"}}
+    },
+    {
+      "name": "a send answered with a bare id",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}
+    },
+    {
+      "name": "a send answered with what is not JSON",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "text": "NaN"}
+    },
+    {
+      "name": "a batch answered with no list",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": null}}
+    },
+    {
+      "name": "a batch answered with an empty list",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": []}}
+    },
+    {
+      "name": "a batch answered with one answer for two emails",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}]}}
+    },
+    {
+      "name": "a batch answered with an item that says nothing",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {}]}}
+    },
+    {
+      "name": "a batch answered with an error that is no error",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"error": {"statusCode": 200, "name": "validation_error"}}]}}
+    },
+    {
+      "name": "a batch answered with an error whose status is no number",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"error": {"statusCode": true, "name": "validation_error"}}]}}
+    },
+    {
+      "name": "a batch answered with an error that is a text",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"error": "no"}]}}
+    },
+    {
+      "name": "a batch answered with a wait that was not asked for",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 200, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"id": "01a20155-0000-7000-8000-000000000000", "scheduled_at": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "a cancel that names another email",
+      "calls": ["emails.cancel"],
+      "answer": {"status": 200, "json": {"id": "01a20155-0000-7000-8000-000000000000", "state": "cancelled"}}
+    },
+    {
+      "name": "a cancel that does not say cancelled",
+      "calls": ["emails.cancel"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "state": "scheduled"}}
+    },
+    {
+      "name": "a cancel that says no state",
+      "calls": ["emails.cancel"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}}
+    },
+    {
+      "name": "a move that names another email",
+      "calls": ["emails.reschedule"],
+      "answer": {"status": 200, "json": {"id": "01a20155-0000-7000-8000-000000000000", "scheduled_at": "2030-01-31T08:00:00Z"}}
+    },
+    {
+      "name": "a move to another time",
+      "calls": ["emails.reschedule"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "scheduled_at": "2030-01-31T09:00:00Z"}}
+    },
+    {
+      "name": "the email's own record in place of a move",
+      "calls": ["emails.reschedule"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "from": "app@example.com", "to": "ana@example.org", "state": "scheduled", "recipients": [{"address": "ana@example.org", "kind": "to", "state": "sent", "updated_at": "2030-01-01T00:00:01Z"}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:01Z", "events": [], "scheduled_at": "2030-01-01T08:00:00Z"}}
+    },
+    {
+      "name": "a move that says no time",
+      "calls": ["emails.reschedule"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}}
+    },
+    {
+      "name": "a move to a time that was never set",
+      "calls": ["emails.reschedule"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "scheduled_at": "0001-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "a lift of none",
+      "calls": ["suppressions.lift"],
+      "answer": {"status": 200, "json": {"lifted": 0}}
+    },
+    {
+      "name": "a lift of several",
+      "calls": ["suppressions.lift"],
+      "answer": {"status": 200, "json": {"lifted": 2}}
+    },
+    {
+      "name": "a lift of fewer than none",
+      "calls": ["suppressions.lift", "suppressions.lift_all"],
+      "answer": {"status": 200, "json": {"lifted": -1}}
+    },
+    {
+      "name": "a count that is a text",
+      "calls": ["suppressions.lift", "suppressions.lift_all"],
+      "answer": {"status": 200, "json": {"lifted": "7"}}
+    },
+    {
+      "name": "a yes that is a text",
+      "calls": ["suppressions.add"],
+      "answer": {"status": 200, "json": {"added": "yes"}}
+    },
+    {
+      "name": "a retry that is not waiting",
+      "calls": ["webhooks.retry_delivery"],
+      "answer": {"status": 200, "json": {"state": "error"}}
+    },
+    {
+      "name": "an endpoint made without its secret",
+      "calls": ["webhooks.create"],
+      "answer": {"status": 201, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z"}}
+    },
+    {
+      "name": "a changed secret that is not said",
+      "calls": ["webhooks.rotate_secret"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f42-7fcf-bf8a-120e8aa42bf6", "url": "https://app.example.com/hooks/cairnpost", "events": ["email.bounced", "email.complained"], "description": "Bounces", "enabled": true, "created_at": "2030-01-01T00:00:00Z", "previous_secret_until": "2030-01-02T00:00:00Z"}}
+    },
+    {
+      "name": "limits that name no driver",
+      "calls": ["limits"],
+      "answer": {"status": 200, "json": {"driver": "", "quota": null}}
+    },
+    {
+      "name": "a template list that does not say whether there are more",
+      "calls": ["templates.list"],
+      "answer": {"status": 200, "json": {"data": []}}
+    },
+    {
+      "name": "a suppression that names no address",
+      "calls": ["suppressions.list"],
+      "answer": {"status": 200, "json": {"data": [{"domain": "example.com", "reason": "manual", "note": "asked", "created_at": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "a suppression that names no domain",
+      "calls": ["suppressions.list"],
+      "answer": {"status": 200, "json": {"data": [{"address": "gone@example.org", "reason": "manual", "note": "asked", "created_at": "2030-01-01T00:00:00Z"}]}}
+    },
+    {
+      "name": "health without its driver",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"events": "off", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its events",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its inbound",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its pruning",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its scheduled",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "pruning": "running", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its status",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "pruning": "running", "scheduled": "sending", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its version",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "webhooks": "sending"}}
+    },
+    {
+      "name": "health without its webhooks",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "off", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1"}}
+    },
+    {
+      "name": "health with an empty field",
+      "calls": ["health"],
+      "answer": {"status": 200, "json": {"driver": "capture", "events": "", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "ok", "version": "0.1.1", "webhooks": "sending"}}
+    },
+    {
+      "name": "a 503 that is not the server's own word on how it stands",
+      "calls": ["health"],
+      "answer": {"status": 503, "text": "<html>down</html>"}
+    },
+    {
+      "name": "done, said with a 200",
+      "calls": ["webhooks.delete", "templates.delete", "received.delete"],
+      "answer": {"status": 200, "text": ""}
+    },
+    {
+      "name": "done, said with a 202",
+      "calls": ["webhooks.delete", "templates.delete", "received.delete"],
+      "answer": {"status": 202, "text": ""}
+    },
+    {
+      "name": "done, said with a body",
+      "calls": ["webhooks.delete", "templates.delete", "received.delete"],
+      "answer": {"status": 200, "json": {"deleted": true}}
+    },
+    {
+      "name": "a file that is not said to be bytes",
+      "calls": ["emails.file", "received.raw", "received.file"],
+      "answer": {"status": 200, "text": "hello", "headers": {"Content-Type": "text/plain"}}
+    },
+    {
+      "name": "a file said as JSON",
+      "calls": ["emails.file", "received.raw", "received.file"],
+      "answer": {"status": 200, "text": "hello", "headers": {"Content-Type": "application/json"}}
+    }
+  ],
+  "taken": [
+    {
+      "name": "a list of none",
+      "calls": ["suppressions.list", "webhooks.list", "captured", "received.list", "webhooks.deliveries"],
+      "answer": {"status": 200, "json": {"data": []}}
+    },
+    {
+      "name": "no template",
+      "calls": ["templates.list"],
+      "answer": {"status": 200, "json": {"data": [], "more": false}}
+    },
+    {
+      "name": "none lifted",
+      "calls": ["suppressions.lift_all"],
+      "answer": {"status": 200, "json": {"lifted": 0}}
+    },
+    {
+      "name": "an address that was suppressed already",
+      "calls": ["suppressions.add"],
+      "answer": {"status": 200, "json": {"added": false, "address": "gone@example.org", "domain": "example.com"}}
+    },
+    {
+      "name": "a test the endpoint took",
+      "calls": ["webhooks.test"],
+      "answer": {"status": 200, "json": {"delivered": true, "status": 204}}
+    },
+    {
+      "name": "a test that did not reach the endpoint",
+      "calls": ["webhooks.test"],
+      "answer": {"status": 200, "json": {"delivered": false, "failure": "refused"}}
+    },
+    {
+      "name": "an email that waits",
+      "calls": ["emails.get"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "from": "app@example.com", "to": "ana@example.org", "state": "scheduled", "recipients": [{"address": "ana@example.org", "kind": "to", "state": "scheduled", "updated_at": "2030-01-01T00:00:00Z"}], "created_at": "2030-01-01T00:00:00Z", "updated_at": "2030-01-01T00:00:01Z", "events": [], "scheduled_at": "2030-01-31T08:00:00Z"}}
+    },
+    {
+      "name": "an email some addresses were left out of",
+      "calls": ["emails.send"],
+      "answer": {"status": 200, "json": {"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56", "suppressed": ["ben@example.org"]}}
+    },
+    {
+      "name": "a batch with one email refused",
+      "calls": ["emails.send_batch"],
+      "answer": {"status": 207, "json": {"data": [{"id": "01a20155-8f2b-76c9-bc68-b2e7bdcd4c56"}, {"error": {"statusCode": 422, "name": "recipient_suppressed", "message": "Suppressed."}}]}}
+    },
+    {
+      "name": "an empty file",
+      "calls": ["emails.file", "received.raw", "received.file"],
+      "answer": {"status": 200, "text": "", "headers": {"Content-Type": "application/octet-stream"}}
+    },
+    {
+      "name": "limits with a quota",
+      "calls": ["limits"],
+      "answer": {"status": 200, "json": {"driver": "cloudflare", "quota": {"limit": 200, "per": "day", "used": 12, "over": false, "resets_at": "2030-01-02T00:00:00Z"}}}
+    },
+    {
+      "name": "a server that is up and says what is not",
+      "calls": ["health"],
+      "answer": {"status": 503, "json": {"driver": "capture", "events": "failing", "inbound": "on", "pruning": "running", "scheduled": "sending", "status": "unavailable", "version": "0.1.1", "webhooks": "sending"}}
+    }
+  ]
+}

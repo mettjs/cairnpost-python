@@ -22,6 +22,12 @@ jobs:
       - run: uv run ruff check .
       - run: uv run mypy
       - run: uv run python -m unittest discover -s tests -t .
+      # The shared cases are a copy of the server's own, at the commit SOURCE names.
+      - name: The shared cases are the server's
+        run: |
+          git clone --quiet --filter=blob:none https://github.com/mettjs/CairnPost.git "$RUNNER_TEMP/server"
+          git -C "$RUNNER_TEMP/server" checkout --quiet "$(cat tests/cases/SOURCE)"
+          diff -r --exclude=SOURCE --exclude=README.md "$RUNNER_TEMP/server/client-cases" tests/cases
       # The package as a user gets it: built, installed elsewhere, then used.
       - run: |
           uv build

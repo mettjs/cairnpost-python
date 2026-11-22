@@ -50,6 +50,12 @@ above, the integration tests against the server's published image.
 - **An answer is read field by field** (`src/cairnpost/_read.py`), never
   trusted to have its shape.
 - **Errors say what to do**, and never echo the server's raw answer.
+- **The shared cases are a copy.** `tests/cases` holds the cases every
+  CairnPost client is held to, copied from
+  [`client-cases`](https://github.com/mettjs/CairnPost/tree/main/client-cases)
+  in the server's repository at the commit `tests/cases/SOURCE` names. A
+  case is changed there, never here; a new call is added to the table in
+  `tests/asking.py`. CI compares the copy with that commit.
 - **Documentation is true now.** A change to what the client does updates
   the README and the changelog with it.
 - **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/),
