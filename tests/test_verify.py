@@ -72,6 +72,23 @@ class AWebhook(unittest.TestCase):
         self.assertEqual(v.verify(message, bytearray(BOUNCE.encode())), want)
         self.assertNotIn("whsec", repr(v) + str(vars(v) if hasattr(v, "__dict__") else ""))
 
+    # A body is read as JSON the way the other clients read it: what is
+    # not JSON is not read, though Python's own decoder takes it, and a
+    # number longer than Python reads as an int is still a number.
+    def test_a_body_is_json_as_every_client_reads_it(self) -> None:
+        v = Verifier(SECRET, now=lambda: float(AT))
+
+        def given(extra: str) -> tuple[dict[str, str], str]:
+            body = BOUNCE[:-1] + ',"extra":' + extra + "}"
+            return headers("webhook-", "dlv-1", AT, signature(SIGNING_KEY, "dlv-1", AT, body)), body
+
+        for token in ("NaN", "Infinity", "-Infinity"):
+            with self.assertRaises(WebhookError, msg=token) as refused:
+                v.verify(*given(token))
+            self.assertEqual(refused.exception.reason, "payload", token)
+        for token in ("30", "9" * 4300, "9" * 4301, "-" + "9" * 20000, "1e400"):
+            self.assertEqual(v.verify(*given(token)).type, EventType.BOUNCED, token[:12])
+
     # A call that is itself wrong is said as that, not as a forged webhook.
     def test_a_call_that_is_wrong_is_a_type_error(self) -> None:
         v = Verifier(SECRET, now=lambda: float(AT))

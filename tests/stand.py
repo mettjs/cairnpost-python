@@ -36,7 +36,11 @@ class Seen:
 
 
 #: Answers request number n: (status, body, headers), or None to hang up.
-Answer = Callable[[int, Seen], "tuple[int, bytes | str, dict[str, str]] | tuple[int, bytes | str] | None"]
+#: A header given a list is said once for each value.
+Answer = Callable[
+    [int, Seen],
+    "tuple[int, bytes | str, dict[str, str]] | tuple[int, bytes | str, dict[str, list[str]]] | tuple[int, bytes | str] | None",
+]
 
 
 class Stand:
@@ -74,7 +78,9 @@ class Stand:
                 raw = payload.encode("utf-8") if isinstance(payload, str) else payload
                 self.send_response(status)
                 for name, value in (rest[0] if rest else {}).items():
-                    self.send_header(name, value)
+                    # A list is the header said once for each value.
+                    for one_value in value if isinstance(value, list) else [value]:
+                        self.send_header(name, one_value)
                 self.send_header("Content-Length", str(len(raw)))
                 self.end_headers()
                 self.wfile.write(raw)

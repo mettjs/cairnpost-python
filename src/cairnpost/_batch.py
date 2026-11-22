@@ -8,6 +8,7 @@ from ._email import Sent, read_sent
 from ._errors import CairnPostError
 from ._problem import problem_from
 from ._read import Misshapen, fields, has, items
+from ._wait import believed
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -48,13 +49,5 @@ def _one(o: dict[str, object], later: bool) -> BatchResult:
         raise Misshapen
     # Under a name this client does not know, only the status is believed,
     # as for an answer that is not CairnPost's.
-    wait = e.get("retry_after")
-    seconds: float | None = None
-    if (
-        known(e.get("name")) is not None
-        and isinstance(wait, int | float)
-        and not isinstance(wait, bool)
-        and wait > 0
-    ):
-        seconds = float(wait)
+    seconds = believed(e.get("retry_after")) if known(e.get("name")) is not None else None
     return BatchResult(error=problem_from(status, e, seconds))

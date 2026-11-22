@@ -36,7 +36,8 @@ class CairnPostError(Exception):
     #: idempotency key that may have gone.
     email_id: str | None
     #: How long the server asked to wait, in seconds; None when it did not
-    #: say.
+    #: say. Whole seconds, at least one and never more than about 31
+    #: years: a wait outside that is read as none.
     retry_after: float | None
 
     def __init__(

@@ -8,6 +8,31 @@ Every change a user of this client can notice is written here. The format is
 
 ### Fixed
 
+- `retry_after` is read by one rule, the same in the Go and Node.js
+  clients. A wait is 1 to 9 digits of seconds in the `Retry-After`
+  header, or a date there exactly as HTTP writes one now
+  (`Sun, 06 Nov 1994 08:49:37 GMT`), and is at least a second and at
+  most 999,999,999 seconds. Anything else is no wait.
+  - A date with its names in other letters (`sun`, `NOV`), or with the
+    wrong day of the week, was read as a wait.
+  - The wait until a date is counted in whole seconds, a part of one as
+    a whole one, so that a caller never comes back early. It was
+    rounded to the nearest, and a half to the even second.
+  - Around the header's value only a space, a tab or a line break is
+    dropped. A no-break space, the character U+0085 and other blank
+    characters were dropped too.
+  - A date more than 999,999,999 seconds away (about 31 years) is no
+    wait. It was passed on as it was.
+  - On an email of a batch, a `retry_after` that is not a whole number
+    from 1 to 999,999,999 is no wait. A fraction, or a number of any
+    size, was passed on.
+- An answer, and a webhook's body, is read as JSON the way the other
+  clients read it. One holding `NaN` or `Infinity`, which are not JSON,
+  is refused: an answer as not CairnPost's, a webhook with a
+  `WebhookError` whose `reason` is `"payload"`. It was read. One holding
+  a whole number of more digits than Python reads as an `int` (4300
+  unless set otherwise) is read; it was refused, and a batch refused so
+  says its emails may have gone. CairnPost writes neither.
 - `Verifier` drops only a space, a tab or a line break around a signing
   secret, and so do the Go and Node.js clients now. Each dropped what
   its own language calls blank space, and the three sets differ: a
