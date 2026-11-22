@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Any, Literal, Protocol
 
+from ._bare import AROUND, bare
 from ._events import WebhookEvent
 from ._parse import parse
 from ._payload import read_event
@@ -62,6 +63,8 @@ class WebhookError(Exception):
 # Base64 as the standard writes it: the decoder alone takes much else.
 _BASE64 = re.compile(r"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?", re.ASCII)
 _SECONDS = re.compile(r"[0-9]{1,15}", re.ASCII)
+#: What stands between two signatures.
+_BETWEEN = re.compile(f"[{AROUND}]+")
 
 
 def _decode(encoded: str) -> bytes | None:
@@ -71,6 +74,12 @@ def _decode(encoded: str) -> bytes | None:
         return base64.b64decode(encoded, validate=True)
     except (binascii.Error, ValueError):
         return None
+
+
+def _key_of(secret: object) -> bytes | None:
+    """The key a signing secret holds; None when it is not one."""
+    trimmed = bare(secret) if isinstance(secret, str) else ""
+    return _decode(trimmed.removeprefix("whsec_")) if trimmed.startswith("whsec_") else None
 
 
 class Verifier:
@@ -91,13 +100,15 @@ class Verifier:
         mark, say) is refused. `tolerance` is how far the timestamp may be
         from now, either way, in seconds; `now` is the clock.
         """
-        # Not `strip()`: that drops more, and the same value must be a
-        # secret, or not one, in every client.
-        trimmed = secret.strip(" \t\r\n") if isinstance(secret, str) else ""
-        key = _decode(trimmed.removeprefix("whsec_")) if trimmed.startswith("whsec_") else None
+        # Read in a frame of its own, and refused from this one with the
+        # secret gone from it: an error reporter shows the values of every
+        # frame an error passed through.
+        key = _key_of(secret)
+        del secret
         if key is None:
             raise WebhookError("secret")
         self._key = key
+        del key
         self._tolerance = tolerance if tolerance > 0 else DEFAULT_TOLERANCE
         self._now = now
 
@@ -137,12 +148,19 @@ class Verifier:
             raise WebhookError("unsigned")
         # A text no encoding can carry is not the body that was signed.
         raw = body.encode("utf-8", errors="replace") if isinstance(body, str) else bytes(body)
-        want = hmac.new(self._key, f"{id}.{stamp}.".encode() + raw, hashlib.sha256).digest()
+        try:
+            about: bytes | None = f"{id}.{stamp}.".encode()
+        except UnicodeEncodeError:
+            # An id with half a character in it: no bytes were signed that
+            # it could be, so no signature matches.
+            about = None
         matched = False
-        for candidate in signatures.split():
-            got = _decode(candidate.removeprefix("v1,")) if candidate.startswith("v1,") else None
-            if got is not None and hmac.compare_digest(got, want):
-                matched = True
+        if about is not None:
+            want = hmac.new(self._key, about + raw, hashlib.sha256).digest()
+            for candidate in _BETWEEN.split(signatures):
+                got = _decode(candidate.removeprefix("v1,")) if candidate.startswith("v1,") else None
+                if got is not None and hmac.compare_digest(got, want):
+                    matched = True
         if not matched:
             raise WebhookError("signature")
         # The time is checked after the signature: only a signed timestamp
@@ -163,12 +181,15 @@ class Verifier:
 
 
 def _signed(headers: RequestHeaders) -> tuple[str, str, str]:
-    """Reads the signature headers under whichever names they came."""
+    """Reads the signature headers under whichever names they came.
+
+    Each is read without the space, tabs and line breaks around its value.
+    """
     # Whatever the case of the names, and whatever kind of mapping it is.
     given: dict[str, str] = {}
     for name, value in headers.items():
         if isinstance(name, str) and isinstance(value, str):
-            given.setdefault(name.lower(), value.strip())
+            given.setdefault(name.lower(), bare(value))
     found = ("", "", "")
     for prefix in ("webhook-", "svix-"):
         found = (

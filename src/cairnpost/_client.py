@@ -6,6 +6,7 @@ import ssl
 from urllib.parse import urlsplit
 
 from ._answer import reading
+from ._bare import bare
 from ._codes import ErrorCode
 from ._emails import Emails
 from ._errors import CairnPostError, NotCapturingError, is_wrong_address
@@ -30,7 +31,78 @@ DEFAULT_TIMEOUT = 150.0
 DEFAULT_MAX_ANSWER_BYTES = 64 * 1024 * 1024
 
 _PATH = re.compile(r"[\x21-\x7e]*", re.ASCII)
+#: What an API key holds: printable ASCII, with no space.
+_KEY = re.compile(r"[\x21-\x7e]+", re.ASCII)
 _BAD_URL = "cairnpost: the base URL must be http:// or https:// and name a host"
+
+
+def _address(base_url: object) -> tuple[bool, str, int, str] | str:
+    """Where the server is (https or not, host, port, path), or what is wrong with the base URL."""
+    try:
+        url = urlsplit(base_url if isinstance(base_url, str) else "")
+        host, port = url.hostname, url.port
+    except ValueError:
+        return _BAD_URL
+    if (
+        url.scheme not in ("http", "https")
+        or not host
+        or url.username is not None
+        or url.password is not None
+    ):
+        return _BAD_URL
+    # A path is sent as it is written: one that cannot be is said here,
+    # not at every call.
+    if not _PATH.fullmatch(url.path):
+        return "cairnpost: the base URL's path must be written as a URL carries it (no spaces)"
+    secure = url.scheme == "https"
+    # The port is always said: a host with colons in it (IPv6) is not then read as "host:port".
+    return secure, host, port or (443 if secure else 80), url.path.rstrip("/")
+
+
+def _settled(
+    base_url: object,
+    api_key: object,
+    *,
+    timeout: object,
+    max_answer_bytes: object,
+    user_agent: str | None,
+    tls: ssl.SSLContext | None,
+) -> Transport | str:
+    """What a client calls through, or what is wrong with what it was given."""
+    address = _address(base_url)
+    if isinstance(address, str):
+        return address
+    secure, host, port, prefix = address
+    # A key read from a file often ends in a newline; one with anything
+    # else in it that no key has is refused here, not at the first call.
+    key = bare(api_key) if isinstance(api_key, str) else ""
+    if not _KEY.fullmatch(key):
+        return "cairnpost: an API key is required, and holds only printable ASCII characters, with no spaces"
+    try:
+        seconds = (
+            float(timeout) if isinstance(timeout, int | float) and not isinstance(timeout, bool) else 0.0
+        )
+    except OverflowError:
+        # A whole number too large to be a time at all.
+        seconds = math.inf
+    if not 0 < seconds < math.inf:
+        return "cairnpost: timeout must be a number of seconds above 0"
+    if isinstance(max_answer_bytes, bool) or not isinstance(max_answer_bytes, int) or max_answer_bytes < 1:
+        return "cairnpost: max_answer_bytes must be a whole number above 0"
+    agent = "cairnpost-python/" + __version__
+    if user_agent and header_safe(user_agent):
+        agent = user_agent + " " + agent
+    return Transport(
+        secure=secure,
+        host=host,
+        port=port,
+        prefix=prefix,
+        key=key,
+        agent=agent,
+        timeout=seconds,
+        max_answer_bytes=max_answer_bytes,
+        tls=(tls or ssl.create_default_context()) if secure else None,
+    )
 
 
 class CairnPost:
@@ -67,7 +139,10 @@ class CairnPost:
         """Makes a client for the server at `base_url` ("https://mail.example.com") using `api_key`.
 
         A send key may send and read its own emails; the calls marked
-        "admin key" need an admin key.
+        "admin key" need an admin key. A space, a tab or a line break
+        around the key is dropped, as a value read from a file ends in a
+        line break; a key with anything else in it that no key has is
+        refused.
 
         `timeout` is how long a call may take, in seconds: keep it above
         the server's send and batch timeouts. `max_answer_bytes` is how
@@ -79,51 +154,23 @@ class CairnPost:
         ignored. `tls` is how an https server is trusted; the system's own
         certificates when left out.
         """
+        # What is wrong is found in a frame of its own and said from this
+        # one with the key gone from it: an error reporter shows the values
+        # of every frame an error passed through.
         try:
-            url = urlsplit(base_url if isinstance(base_url, str) else "")
-            host, port = url.hostname, url.port
-        except ValueError:
-            raise ValueError(_BAD_URL) from None
-        if (
-            url.scheme not in ("http", "https")
-            or not host
-            or url.username is not None
-            or url.password is not None
-        ):
-            raise ValueError(_BAD_URL)
-        # A path is sent as it is written: one that cannot be is said
-        # here, not at every call.
-        if not _PATH.fullmatch(url.path):
-            raise ValueError("cairnpost: the base URL's path must be written as a URL carries it (no spaces)")
-        # A key read from a file often ends in a newline; one with anything
-        # else a header cannot carry is refused here, not at the first call.
-        key = api_key.strip() if isinstance(api_key, str) else ""
-        if not header_safe(key) or " " in key:
-            raise ValueError("cairnpost: an API key is required, and holds no spaces or control characters")
-        if isinstance(timeout, bool) or not isinstance(timeout, int | float) or not 0 < timeout < math.inf:
-            raise ValueError("cairnpost: timeout must be a number of seconds above 0")
-        if (
-            isinstance(max_answer_bytes, bool)
-            or not isinstance(max_answer_bytes, int)
-            or max_answer_bytes < 1
-        ):
-            raise ValueError("cairnpost: max_answer_bytes must be a whole number above 0")
-        agent = "cairnpost-python/" + __version__
-        if user_agent and header_safe(user_agent):
-            agent = user_agent + " " + agent
-        secure = url.scheme == "https"
-        self._t = Transport(
-            secure=secure,
-            host=host,
-            # Always said: a host with colons in it (IPv6) is not then read as "host:port".
-            port=port or (443 if secure else 80),
-            prefix=url.path.rstrip("/"),
-            key=key,
-            agent=agent,
-            timeout=float(timeout),
-            max_answer_bytes=max_answer_bytes,
-            tls=(tls or ssl.create_default_context()) if secure else None,
-        )
+            made = _settled(
+                base_url,
+                api_key,
+                timeout=timeout,
+                max_answer_bytes=max_answer_bytes,
+                user_agent=user_agent,
+                tls=tls,
+            )
+        finally:
+            del api_key
+        if isinstance(made, str):
+            raise ValueError(made)
+        self._t = made
         self.emails = Emails(self._t)
         self.suppressions = Suppressions(self._t)
         self.webhooks = Webhooks(self._t)
@@ -131,8 +178,9 @@ class CairnPost:
         self.received = ReceivedEmails(self._t)
 
     def __repr__(self) -> str:
-        # Never the key.
-        return f"<CairnPost client, {self._t!r}>"
+        # Never the key. And never an error of its own: a client that was
+        # refused while it was made is shown by whatever reports that.
+        return f"<CairnPost client, {getattr(self, '_t', 'not made')!r}>"
 
     def health(self) -> Health:
         """Asks the server how it is. It needs no key.
