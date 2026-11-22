@@ -2,7 +2,7 @@
 
 The files in tests/cases say what each call sends, the answers a client
 must take and those it must refuse, what an error says to do, which API
-keys it takes, and which webhooks are the endpoint's. They are a copy of the server's own
+keys and idempotency keys it takes, and which webhooks are the endpoint's. They are a copy of the server's own
 (client-cases in its repository) and are changed there, never here. The
 tests in test_cases_*.py run them.
 """
