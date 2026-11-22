@@ -6,6 +6,16 @@ Every change a user of this client can notice is written here. The format is
 
 ## [Unreleased]
 
+### Fixed
+
+- `Verifier` drops only a space, a tab or a line break around a signing
+  secret, and so do the Go and Node.js clients now. Each dropped what
+  its own language calls blank space, and the three sets differ: a
+  secret with one of the separators U+001C to U+001F around it was taken
+  here and refused by the other two. A secret with any other character
+  around it, a no-break space or a form feed among them, is now refused
+  with a `WebhookError` whose `reason` is `"secret"`.
+
 ## [0.1.0] - 2026-11-17
 
 ### Added

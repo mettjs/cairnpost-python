@@ -85,10 +85,15 @@ class Verifier:
 
         That is the "whsec_..." value `webhooks.create` answered or, once
         the secret was changed, the one `webhooks.rotate_secret` did. Each
-        is said only once. `tolerance` is how far the timestamp may be
+        is said only once. A space, a tab or a line break around it is
+        dropped, as a value read from a file ends in a line break. Nothing
+        else is: one with any other character around it (a byte order
+        mark, say) is refused. `tolerance` is how far the timestamp may be
         from now, either way, in seconds; `now` is the clock.
         """
-        trimmed = secret.strip() if isinstance(secret, str) else ""
+        # Not `strip()`: that drops more, and the same value must be a
+        # secret, or not one, in every client.
+        trimmed = secret.strip(" \t\r\n") if isinstance(secret, str) else ""
         key = _decode(trimmed.removeprefix("whsec_")) if trimmed.startswith("whsec_") else None
         if key is None:
             raise WebhookError("secret")
