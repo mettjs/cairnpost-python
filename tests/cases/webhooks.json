@@ -392,6 +392,180 @@
       "headers": {"webhook-id": "p", "webhook-timestamp": "1893456010", "webhook-signature": "v1,7eZsWffKmuNo6mC1RrFV1qm8xydroCXD471vtwE29YE="},
       "body": "{\"type\":\"email.received\",\"created_at\":\"2030-01-01T00:00:00Z\",\"data\":{\"inbound_id\":\"in-1\",\"from\":\"a@example.org\",\"to\":[\"help@example.com\"],\"received_at\":\"0001-01-01T00:00:00Z\"}}",
       "want": {"refused": "payload"}
+    },
+    {
+      "name": "an id, a time and a signature with a space, a tab and line breaks around them",
+      "headers": {"webhook-id": " dlv-1\t", "webhook-timestamp": "\t1893456010\r\n", "webhook-signature": "\r\n v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0= \t"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "two signatures with a tab and a line break between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU=\t\r\nv1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "an id with a byte order mark in front",
+      "headers": {"webhook-id": "\ufeffdlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "an id with a no-break space after it",
+      "headers": {"webhook-id": "dlv-1\u00a0", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "an id with the character U+0085 after it",
+      "headers": {"webhook-id": "dlv-1\u0085", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "an id with the character U+001F in front",
+      "headers": {"webhook-id": "\u001fdlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "an id with a form feed after it",
+      "headers": {"webhook-id": "dlv-1\f", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a time with a byte order mark in front",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "\ufeff1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time with a no-break space after it",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010\u00a0", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time with the character U+0085 after it",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010\u0085", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time with the character U+001F in front",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "\u001f1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time with a vertical tab in front",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "\u000b1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time with a plus sign",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "+1893456010", "webhook-signature": "v1,OwgjnlCpsRelPsHX/PJsVQXnMan071wOb2aJJ8L1PkE="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time below nothing",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "-1893456010", "webhook-signature": "v1,mnOaHBN7k16xB6CARX5mj7flGLOnc3/Mzh8dtxHdMTs="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a time of sixteen digits",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "0000001893456010", "webhook-signature": "v1,9bhyeQ6JHb1PrS/QYxpv2aNCrJWEhKFaZjitZ77YMIQ="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "a signature with a byte order mark in front",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "\ufeffv1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature with the character U+0085 after it",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=\u0085"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature with the character U+001F after it",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=\u001f"},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a signature with a no-break space in front",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "\u00a0v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "two signatures with a byte order mark between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU=\ufeffv1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "two signatures with the character U+0085 between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=\u0085v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "two signatures with the character U+001F between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU=\u001fv1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "two signatures with a vertical tab between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU=\u000bv1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "two signatures with a no-break space between them",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=\u00a0v1,TTjolWZujSUarlghf78PejgUHDY5QZRYGvIUSXnyVtU="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "a time with zeros in front, signed as it is written",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "000001893456010", "webhook-signature": "v1,jCNbq4bWHO1laqOTTkMx/9ZYYKsAc/+66pnLwKGhCVg="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "a time with zeros in front, signed as the number it is",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "000001893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
+    },
+    {
+      "name": "an id under one name and the rest under the other",
+      "headers": {"webhook-id": "dlv-1", "svix-timestamp": "1893456010", "svix-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "unsigned"}
+    },
+    {
+      "name": "both sets of names, the first one whole",
+      "headers": {"webhook-id": "dlv-1", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0=", "svix-id": "another", "svix-timestamp": "1893456010", "svix-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"event": {"id": "dlv-1", "type": "email.bounced", "at": "2030-01-01T00:00:05Z", "email": {"id": "m1", "from": "app@example.com", "to": ["gone@example.org"], "created_at": "2030-01-01T00:00:00Z", "code": "5.1.1", "reason": "permanent_failure", "bounce": "Permanent", "suppressed": true}}}
+    },
+    {
+      "name": "an id with half a character in it",
+      "headers": {"webhook-id": "dlv-1\udc80", "webhook-timestamp": "1893456010", "webhook-signature": "v1,p9WwLHcpBZ7xFb8donf9MfcmkbuomAhPJS5YIJNTtT0="},
+      "body": "{\"type\":\"email.bounced\",\"created_at\":\"2030-01-01T00:00:05Z\",\"data\":{\"email_id\":\"m1\",\"from\":\"app@example.com\",\"to\":[\"gone@example.org\"],\"created_at\":\"2030-01-01T00:00:00Z\",\"code\":\"5.1.1\",\"reason\":\"permanent_failure\",\"bounce\":{\"type\":\"Permanent\"},\"suppressed\":true}}",
+      "want": {"refused": "signature"}
     }
   ]
 }

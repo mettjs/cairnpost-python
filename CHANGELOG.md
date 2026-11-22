@@ -15,6 +15,28 @@ Every change a user of this client can notice is written here. The format is
   here and refused by the other two. A secret with any other character
   around it, a no-break space or a form feed among them, is now refused
   with a `WebhookError` whose `reason` is `"secret"`.
+- One value is now read the same way by this client and by the Go and
+  Node.js ones. Around an API key, and around the id, the timestamp and
+  the signatures of a webhook, a space, a tab or a line break is dropped
+  and nothing else is.
+  - `CairnPost` refuses a key with any other character around it. It
+    dropped other blank characters (a no-break space, a form feed, the
+    separators below the space) and took what was left.
+  - `verify` no longer drops those characters around a webhook's id,
+    timestamp or signature, nor takes them for the gap between two
+    signatures. Such a webhook is refused, as the other clients refuse
+    it. A webhook as CairnPost sends it has none of them.
+- `verify` refuses a webhook whose id holds half a character (a lone
+  surrogate) with a `WebhookError`, as it does any forged one. It raised
+  `UnicodeEncodeError`.
+- When `CairnPost` or `Verifier` refuses what it was given (a key, a
+  secret, a base URL, a timeout), the error no longer passes through a
+  frame of this client that holds the key or the secret. An error
+  reporter that records the values of every frame recorded it. A client
+  that was refused can also be shown by one: its `repr` raised an error
+  of its own, which on Python 3.11 took the place of the refusal.
+- A `timeout` too large to be a number of seconds at all (`10**400`) is
+  a `ValueError`, as any other bad timeout is. It raised `OverflowError`.
 
 ## [0.1.0] - 2026-11-17
 

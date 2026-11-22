@@ -1,0 +1,36 @@
+{
+  "taken": [
+    {"given": "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8", "sends": "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"},
+    {"given": " cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\n", "sends": "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"},
+    {"given": "\tcp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\r\n", "sends": "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"},
+    {"given": "\r\n \tcp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\t \n\r", "sends": "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"},
+    {"given": "!a-key.of/another_form~", "sends": "!a-key.of/another_form~"},
+    {"given": "k", "sends": "k"}
+  ],
+  "refused": [
+    "",
+    " ",
+    "\n",
+    "\r\n\t ",
+    "\ufeffcp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\ufeff",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\u0085",
+    "\u001fcp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "\u000bcp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\f",
+    "\u00a0cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\u2028",
+    "\u0000cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\u007f",
+    "cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8\u00e9",
+    "\u3000cp_0123abcd_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF BgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\tBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\nBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\rBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\ufeffBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\u00a0BgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\u00e9BgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+    "cp_0123abcd_AAECAwQF\u007fBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
+  ]
+}

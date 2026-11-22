@@ -3,14 +3,20 @@ from __future__ import annotations
 import socket
 import threading
 import time
+import traceback
 import unittest
+from collections.abc import Callable
+from pathlib import Path
 
+import cairnpost
 from cairnpost import (
     CairnPost,
     CairnPostError,
     Email,
     ErrorCode,
     TransportError,
+    Verifier,
+    WebhookError,
     __version__,
     is_not_found,
     may_have_sent,
@@ -19,6 +25,8 @@ from cairnpost._client import CairnPost as _Same
 
 from .stand import EMAIL, KEY, UP, Stand, serve
 
+#: Where the client's own code is: its frames are the ones looked at.
+OURS = str(Path(cairnpost.__file__).parent)
 RECORD = '{"id":"m","created_at":"2030-01-01T00:00:00Z","updated_at":"2030-01-01T00:00:00Z"}'
 
 
@@ -143,13 +151,42 @@ class TheClient(unittest.TestCase):
         self.assertLess(time.monotonic() - began, 2)
 
     def test_a_time_or_a_size_that_is_none_is_refused_when_the_client_is_made(self) -> None:
-        for timeout in [0, -1, float("inf"), float("nan"), True, "30", None]:
+        for timeout in [0, -1, float("inf"), float("nan"), 10**400, True, "30", None]:
             with self.assertRaisesRegex(ValueError, "timeout", msg=repr(timeout)):
                 CairnPost("https://mail.example.com", KEY, timeout=timeout)  # type: ignore[arg-type]
         for most in [0, -1, 1.5, True]:
             with self.assertRaisesRegex(ValueError, "max_answer_bytes"):
                 CairnPost("https://mail.example.com", KEY, max_answer_bytes=most)  # type: ignore[arg-type]
         CairnPost("https://mail.example.com", KEY, timeout=600, max_answer_bytes=1)
+        # What is wrong is said in the order the arguments come.
+        with self.assertRaisesRegex(ValueError, "API key"):
+            CairnPost("https://mail.example.com", "a key", timeout=-1, max_answer_bytes=0)
+
+    # An error reporter may show the values of every frame an error passed
+    # through. Whatever a client or a verifier refuses, its own frames
+    # hold neither the key nor the secret by then.
+    def test_what_is_refused_when_one_is_made_leaves_no_key_or_secret_in_its_frames(self) -> None:
+        secret = "whsec_YSBzaWduaW5nIGtleSBvZiB0aGlydHktdHdvIGJ5dGVz"
+        makes: dict[str, Callable[[], object]] = {
+            "a bad timeout": lambda: CairnPost("https://mail.example.com", KEY, timeout=-1),
+            "a time too large to be one": lambda: CairnPost("https://mail.example.com", KEY, timeout=10**400),
+            "a bad size": lambda: CairnPost("https://mail.example.com", KEY, max_answer_bytes=0),
+            "a bad address": lambda: CairnPost("mail.example.com", KEY),
+            "a bad key": lambda: CairnPost("https://mail.example.com", KEY + "\u00a0"),
+            "a bad secret": lambda: Verifier(secret + "\u00a0"),
+        }
+        for name, make in makes.items():
+            # Caught by hand: assertRaises drops the frames, which are looked at.
+            try:
+                make()
+            except (ValueError, WebhookError) as err:
+                frames = traceback.TracebackException.from_exception(err, capture_locals=True).stack
+                ours = [str(f.locals) for f in frames if f.filename.startswith(OURS)]
+            else:
+                self.fail(f"{name} was taken")
+            self.assertTrue(ours, f"{name}: the refusal passed through no frame of the client's")
+            self.assertNotIn(KEY, "".join(ours), name)
+            self.assertNotIn(secret[6:], "".join(ours), name)
 
     # A long page from something that is not CairnPost is not read whole
     # to say that it is not CairnPost's.
