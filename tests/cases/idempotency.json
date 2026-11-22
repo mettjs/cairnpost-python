@@ -1,0 +1,39 @@
+{
+  "taken": [
+    "welcome-42",
+    "a",
+    "order 42, the welcome email",
+    "!order-42~",
+    "order/42:welcome_email+retry=3",
+    "{\"order\": 42}",
+    "a.b-c_d~e",
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+  ],
+  "refused": [
+    " ",
+    " order-42-welcome",
+    "order-42-welcome ",
+    "\torder-42-welcome",
+    "order-42-welcome\t",
+    "order-42\t-welcome",
+    "order-42\n-welcome",
+    "order-42-welcome\n",
+    "order-42\r-welcome",
+    "order-42\u0000-welcome",
+    "order-42-welcome\u007f",
+    "order-42\u001f-welcome",
+    "cl\u00e9-order-42-welcome",
+    "order-42-welcome\u00e9",
+    "\ufefforder-42-welcome",
+    "order-42-welcome\ufeff",
+    "\u00a0order-42-welcome",
+    "order-42\u00a0-welcome",
+    "order-42-welcome\u0085",
+    "order-42\u0085-welcome",
+    "order-42\u2028-welcome",
+    "\u3000order-42-welcome",
+    "order-42-welcome\u2603",
+    "order-42\ud83d\ude00-welcome"
+  ]
+}
